@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/market.dart';
+import 'package:plan_market/features/login/login.dart';
+import 'package:plan_market/features/login2/login2.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -237,26 +239,38 @@ class _HomePageState extends State<HomePage> {
                   final label = items[i]['label'] as String;
 
                   return GestureDetector(
-                    onTap: () => setState(() => currentIndex = i),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          icon,
-                          color: isSelected
-                              ? Colors.white
-                              : Colors.white.withOpacity(0.7),
-                          size: 22,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          label,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: isSelected
-                                ? Colors.white
-                                : Colors.white.withOpacity(0.7),
-                            fontWeight: FontWeight.w600,
+  onTap: () {
+  if (i == 4) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const LoginPage2(),
+      ),
+    );
+    return;
+  }
+
+  setState(() => currentIndex = i);
+},
+  child: Column(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      Icon(
+        icon,
+        color: isSelected
+            ? Colors.white
+            : Colors.white.withOpacity(0.7),
+        size: 22,
+      ),
+      const SizedBox(height: 2),
+      Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          color: isSelected
+              ? Colors.white
+              : Colors.white.withOpacity(0.7),
+          fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],

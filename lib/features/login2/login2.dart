@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
+class LoginPage2 extends StatelessWidget {
+  const LoginPage2({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +45,7 @@ class LoginPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 42),
                         _AuthButton(
-                          text: 'Sign in',
+                          text: 'ลงทะเบียนลูกค้า',
                           backgroundColor: Colors.white,
                           textColor: const Color(0xFF666666),
                           onTap: () {
@@ -54,7 +54,7 @@ class LoginPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 28),
                         _AuthButton(
-                          text: 'Sign up',
+                          text: 'ลงทะเบียนร้านค้า',
                           backgroundColor: const Color(0xFF8CBC63),
                           textColor: const Color(0xFF36531F),
                           onTap: () {
