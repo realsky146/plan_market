@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/market.dart';
 import 'package:plan_market/features/login/login.dart';
-import 'package:plan_market/features/login2/login2.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -244,7 +243,7 @@ class _HomePageState extends State<HomePage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const LoginPage2(),
+        builder: (context) => const LoginPage(),
       ),
     );
     return;

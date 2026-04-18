@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:plan_market/features/home/home_page.dart';
+import 'package:plan_market/features/login2/login2.dart';
+
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -58,7 +61,12 @@ class LoginPage extends StatelessWidget {
                           backgroundColor: const Color(0xFF8CBC63),
                           textColor: const Color(0xFF36531F),
                           onTap: () {
-                            // TODO: ไปหน้า Sign up
+                            Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => const LoginPage2(),
+    ),
+  );
                           },
                         ),
                       ],
@@ -71,7 +79,7 @@ class LoginPage extends StatelessWidget {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                child: _buildBottomNav(),
+                child: _buildBottomNav(context),
               ),
             ],
           ),
@@ -80,7 +88,7 @@ class LoginPage extends StatelessWidget {
     );
   }
 
-  Widget _buildBottomNav() {
+  Widget _buildBottomNav(BuildContext context){
     final items = [
       {'icon': Icons.favorite_border_rounded, 'label': 'ถูกใจ'},
       {'icon': Icons.storefront_outlined, 'label': 'ตลาด'},
@@ -110,26 +118,40 @@ class LoginPage extends StatelessWidget {
                   ...List.generate(items.length, (index) {
                     final item = items[index];
                     return Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            item['icon'] as IconData,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            item['label'] as String,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
+    child: GestureDetector(
+      onTap: () {
+        // 👉 ถ้ากด "หน้าแรก"
+        if (index == 2) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const HomePage(),
+            ),
+            (route) => false,
+          );
+        }
+      },
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            item['icon'] as IconData,
+            color: Colors.white,
+            size: 24,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            item['label'] as String,
+            style: const TextStyle(
+              fontSize: 10,
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
                   }),
                   const SizedBox(width: 54),
                 ],
