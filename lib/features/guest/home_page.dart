@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/market.dart';
+<<<<<<< Updated upstream:lib/features/home/home_page.dart
+=======
+import 'login_page.dart';
+import 'signin_page.dart';
+>>>>>>> Stashed changes:lib/features/guest/home_page.dart
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -237,7 +242,21 @@ class _HomePageState extends State<HomePage> {
                   final label = items[i]['label'] as String;
 
                   return GestureDetector(
+<<<<<<< Updated upstream:lib/features/home/home_page.dart
                     onTap: () => setState(() => currentIndex = i),
+=======
+                    onTap: () {
+                      if (i == 4) {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const SignInPage()));
+                        return;
+                      }
+
+                      setState(() => currentIndex = i);
+                    },
+>>>>>>> Stashed changes:lib/features/guest/home_page.dart
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
