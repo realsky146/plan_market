@@ -1,10 +1,215 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'home_page.dart';
-import 'login_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
-class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
+import '../auth/select_role_page.dart';
+import 'home_page.dart';
+import 'favorite_page.dart';
+import 'market_list_page.dart';
+
+// ✅ ชื่อ class GuestProfilePage ให้ตรงกับที่ signin_page.dart import
+class GuestProfilePage extends StatefulWidget {
+  const GuestProfilePage({super.key});
+
+  @override
+  State<GuestProfilePage> createState() => _GuestProfilePageState();
+}
+
+class _GuestProfilePageState extends State<GuestProfilePage> {
+  int currentIndex = 4;
+  String _userName = 'reaaaaaa456';
+  String _userEmail = 'seeeeeeee@gmail.com';
+  File? _profileImage;
+  final _nameCtrl = TextEditingController();
+  bool _isEditingName = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userName = prefs.getString('userName') ?? 'reaaaaaa456';
+      _userEmail = prefs.getString('userEmail') ?? 'seeeeeeee@gmail.com';
+      final imagePath = prefs.getString('profileImage');
+      if (imagePath != null) _profileImage = File(imagePath);
+    });
+    _nameCtrl.text = _userName;
+  }
+
+  Future<void> _pickImage() async {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'เปลี่ยนรูปโปรไฟล์',
+              style: GoogleFonts.kanit(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Color(0xFF22C55E)),
+              title: Text('ถ่ายรูป', style: GoogleFonts.kanit()),
+              onTap: () {
+                Navigator.pop(context);
+                _getImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading:
+                  const Icon(Icons.photo_library, color: Color(0xFF2D9CDB)),
+              title: Text('เลือกจากคลังรูป', style: GoogleFonts.kanit()),
+              onTap: () {
+                Navigator.pop(context);
+                _getImage(ImageSource.gallery);
+              },
+            ),
+            if (_profileImage != null)
+              ListTile(
+                leading: const Icon(Icons.delete, color: Color(0xFFEF4444)),
+                title: Text(
+                  'ลบรูปโปรไฟล์',
+                  style: GoogleFonts.kanit(color: const Color(0xFFEF4444)),
+                ),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.remove('profileImage');
+                  setState(() => _profileImage = null);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _getImage(ImageSource source) async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: source,
+      imageQuality: 80,
+      maxWidth: 400,
+    );
+    if (picked != null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('profileImage', picked.path);
+      setState(() => _profileImage = File(picked.path));
+    }
+  }
+
+  Future<void> _saveName() async {
+    final newName = _nameCtrl.text.trim();
+    if (newName.isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userName', newName);
+    setState(() {
+      _userName = newName;
+      _isEditingName = false;
+    });
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('บันทึกชื่อเรียบร้อยแล้ว', style: GoogleFonts.kanit()),
+          backgroundColor: const Color(0xFF8CBC63),
+        ),
+      );
+    }
+  }
+
+  Future<void> _logout() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'ออกจากระบบ',
+          style: GoogleFonts.kanit(fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'คุณต้องการออกจากระบบใช่ไหม?',
+          style: GoogleFonts.kanit(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('ยกเลิก', style: GoogleFonts.kanit()),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF8CBC63),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('ออกจากระบบ', style: GoogleFonts.kanit()),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const SelectRolePage()),
+        );
+      }
+    }
+  }
+
+  void _navigateToPage(int index) {
+    if (index == currentIndex) return;
+    setState(() => currentIndex = index);
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      switch (index) {
+        case 0:
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const FavoritePage()),
+          );
+          break;
+        case 1:
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const MarketListPage()),
+          );
+          break;
+        case 2:
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const HomePage()),
+          );
+          break;
+        case 3:
+          break;
+        case 4:
+          break;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,103 +222,40 @@ class ProfilePage extends StatelessWidget {
         body: SafeArea(
           child: Stack(
             children: [
-              // ===== Header โค้งสีเขียว =====
               SizedBox(
                 height: 140,
                 width: double.infinity,
                 child: CustomPaint(painter: _TopWavePainter()),
               ),
-
-              // ===== Content =====
               Column(
                 children: [
                   Expanded(
                     child: SingleChildScrollView(
                       child: Column(
                         children: [
-                          const SizedBox(height: 60),
-
-                          // ===== รูปโปรไฟล์ =====
-                          Container(
-                            width: 100,
-                            height: 100,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFD1D5DB),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.white,
-                                width: 3,
-                              ),
-                            ),
-                            child: const Icon(
-                              Icons.person,
-                              size: 56,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // ===== ปุ่ม profile =====
-                          Container(
-                            width: 180,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(24),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: const Center(
-                              child: Text(
-                                'profile',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF374151),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 28),
-
-                          // ===== ฟอร์มข้อมูล =====
+                          const SizedBox(height: 50),
+                          _buildAvatar(),
+                          const SizedBox(height: 12),
+                          _buildProfileBadge(),
+                          const SizedBox(height: 24),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 24),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // ชื่อบัญชี
-                                const Text(
-                                  'ชื่อบัญชี',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF374151),
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                _infoBox('reaaaaaa456'),
+                                _buildNameField(),
                                 const SizedBox(height: 16),
-
-                                // E-mail
-                                const Text(
+                                Text(
                                   'E-mail',
-                                  style: TextStyle(
+                                  style: GoogleFonts.kanit(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
-                                    color: Color(0xFF374151),
+                                    color: const Color(0xFF374151),
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                _infoBox('seeeeeeee@gamil.com'),
+                                _infoBox(_userEmail),
                                 const SizedBox(height: 32),
-
-                                // ===== ปุ่มออกจากระบบ =====
                                 Center(
                                   child: SizedBox(
                                     width: 180,
@@ -121,26 +263,20 @@ class ProfilePage extends StatelessWidget {
                                     child: OutlinedButton(
                                       style: OutlinedButton.styleFrom(
                                         side: const BorderSide(
-                                            color: Color(0xFFD1D5DB)),
+                                          color: Color(0xFFD1D5DB),
+                                        ),
                                         backgroundColor: Colors.white,
                                         shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(24)),
+                                          borderRadius:
+                                              BorderRadius.circular(24),
+                                        ),
                                       ),
-                                      onPressed: () {
-                                        Navigator.pushReplacement(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (_) =>
-                                                  const LoginPage()),
-                                        );
-                                      },
-                                      child: const Text(
+                                      onPressed: _logout,
+                                      child: Text(
                                         'ออกจากระบบ',
-                                        style: TextStyle(
-                                          color: Color(0xFF6B7280),
+                                        style: GoogleFonts.kanit(
+                                          color: const Color(0xFF6B7280),
                                           fontWeight: FontWeight.w600,
-                                          fontSize: 14,
                                         ),
                                       ),
                                     ),
@@ -156,13 +292,11 @@ class ProfilePage extends StatelessWidget {
                   ),
                 ],
               ),
-
-              // ===== Bottom Nav =====
               Positioned(
                 bottom: 0,
                 left: 0,
                 right: 0,
-                child: _buildBottomNav(context),
+                child: _buildBottomNav(),
               ),
             ],
           ),
@@ -171,7 +305,169 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  // ===== Info Box =====
+  Widget _buildAvatar() {
+    return GestureDetector(
+      onTap: _pickImage,
+      child: Stack(
+        children: [
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              color: const Color(0xFFD1D5DB),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 3),
+              image: _profileImage != null
+                  ? DecorationImage(
+                      image: FileImage(_profileImage!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: _profileImage == null
+                ? const Icon(Icons.person, size: 56, color: Colors.white)
+                : null,
+          ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: const Color(0xFF8CBC63),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+              ),
+              child: const Icon(
+                Icons.camera_alt,
+                color: Colors.white,
+                size: 16,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileBadge() {
+    return Container(
+      width: 200,
+      height: 38,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Text(
+          'profile',
+          style: GoogleFonts.kanit(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF374151),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNameField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'ชื่อบัญชี',
+              style: GoogleFonts.kanit(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF374151),
+              ),
+            ),
+            GestureDetector(
+              onTap: () {
+                if (_isEditingName) {
+                  _saveName();
+                } else {
+                  setState(() => _isEditingName = true);
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: _isEditingName
+                      ? const Color(0xFF8CBC63)
+                      : const Color(0xFFF3F4F6),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  _isEditingName ? 'บันทึก' : 'แก้ไข',
+                  style: GoogleFonts.kanit(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color:
+                        _isEditingName ? Colors.white : const Color(0xFF6B7280),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        _isEditingName
+            ? TextField(
+                controller: _nameCtrl,
+                autofocus: true,
+                style: GoogleFonts.kanit(fontSize: 13),
+                decoration: InputDecoration(
+                  hintText: 'กรอกชื่อบัญชี',
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF8CBC63),
+                      width: 1.5,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF8CBC63),
+                      width: 2,
+                    ),
+                  ),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.close, size: 18, color: Colors.grey),
+                    onPressed: () => setState(() {
+                      _isEditingName = false;
+                      _nameCtrl.text = _userName;
+                    }),
+                  ),
+                ),
+              )
+            : _infoBox(_userName),
+      ],
+    );
+  }
+
   Widget _infoBox(String text) {
     return Container(
       width: double.infinity,
@@ -183,106 +479,111 @@ class ProfilePage extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: const TextStyle(
-          color: Color(0xFF9CA3AF),
+        style: GoogleFonts.kanit(
+          color: const Color(0xFF9CA3AF),
           fontSize: 13,
         ),
       ),
     );
   }
 
-  // ===== Bottom Nav =====
-  Widget _buildBottomNav(BuildContext context) {
+  Widget _buildBottomNav() {
     final items = [
       {'icon': Icons.favorite_border_rounded, 'label': 'ถูกใจ'},
-      {'icon': Icons.storefront_outlined, 'label': 'ตลาด'},
-      {'icon': Icons.home_rounded, 'label': 'หน้าแรก'},
+      {'icon': Icons.storefront_rounded, 'label': 'ตลาด'},
+      {'icon': Icons.home_rounded, 'label': 'หน้าหลัก'},
       {'icon': Icons.shopping_cart_outlined, 'label': 'ร้านค้า'},
+      {'icon': Icons.account_circle_rounded, 'label': 'โปรไฟล์'},
     ];
 
+    final double itemWidth = MediaQuery.of(context).size.width / items.length;
+
     return SizedBox(
-      height: 80,
+      height: 90,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // แถบ nav
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
             child: Container(
-              height: 64,
+              height: 70,
               decoration: const BoxDecoration(
                 color: Color(0xFF8CBC63),
                 borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(24),
-                  topRight: Radius.circular(24),
+                  topLeft: Radius.circular(25),
+                  topRight: Radius.circular(25),
                 ),
               ),
               child: Row(
-                children: [
-                  ...List.generate(items.length, (i) {
-                    final icon = items[i]['icon'] as IconData;
-                    final label = items[i]['label'] as String;
-                    return Expanded(
-                      child: GestureDetector(
-                        onTap: () {
-                          if (i == 2) {
-                            // หน้าแรก
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const HomePage()),
-                            );
-                          }
-                        },
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(icon, color: Colors.white, size: 22),
-                            const SizedBox(height: 2),
-                            Text(label,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w500,
-                                )),
-                          ],
-                        ),
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: List.generate(items.length, (i) {
+                  final isSelected = currentIndex == i;
+                  return GestureDetector(
+                    onTap: () => _navigateToPage(i),
+                    child: SizedBox(
+                      width: itemWidth,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(height: 10),
+                          Icon(
+                            items[i]['icon'] as IconData,
+                            color: Colors.white.withOpacity(
+                              isSelected ? 0.0 : 0.8,
+                            ),
+                            size: 24,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            items[i]['label'] as String,
+                            style: GoogleFonts.kanit(
+                              fontSize: 10,
+                              color: Colors.white.withOpacity(
+                                isSelected ? 0.0 : 0.8,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    );
-                  }),
-
-                  // เว้นที่ให้ปุ่มกลม
-                  const SizedBox(width: 64),
-                ],
+                    ),
+                  );
+                }),
               ),
             ),
           ),
-
-          // ปุ่มกลม โปรไฟล์ (active = เข้มกว่า)
-          Positioned(
-            right: 12,
-            bottom: 6,
-            child: Container(
-              width: 54,
-              height: 54,
-              decoration: BoxDecoration(
-                color: const Color(0xFF5A8A3A),
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2)),
-                ],
-              ),
-              child: const Icon(
-                Icons.account_circle_rounded,
-                color: Colors.white,
-                size: 30,
-              ),
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutBack,
+            left: (itemWidth * currentIndex) + (itemWidth / 2) - 31,
+            top: 2,
+            child: Column(
+              children: [
+                Container(
+                  width: 62,
+                  height: 62,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF6E9B4C),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 3),
+                  ),
+                  child: Icon(
+                    items[currentIndex]['icon'] as IconData,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  items[currentIndex]['label'] as String,
+                  style: GoogleFonts.kanit(
+                    fontSize: 10,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -291,7 +592,7 @@ class ProfilePage extends StatelessWidget {
   }
 }
 
-// ===== Top Wave Painter =====
+// ✅ Wave Painter (ในไฟล์นี้เท่านั้น ไม่ซ้ำกับ vendor_home)
 class _TopWavePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
