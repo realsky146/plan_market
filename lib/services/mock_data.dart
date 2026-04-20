@@ -65,6 +65,17 @@ class MockData {
       'phone': '085-678-9012',
       'createdAt': '2024-01-01',
     },
+    {
+      'id': 'u005',
+      'name': 'Admin ระบบ',
+      'email': 'admin@planmarket.com',
+      'password': 'admin1234',
+      'role': 'super_admin',
+      'status': 'active',
+      'phone': '000-000-0000',
+      'avatar': null,
+      'createdAt': '2024-01-01',
+    },
   ];
 
   // ── Markets ──────────────────────────────────────────────
@@ -145,4 +156,20 @@ class MockData {
       'type': 'รายวัน',
     },
   ];
+  // ⬇️ เพิ่ม Favorites (ขาดอยู่!)
+  static final List<Map<String, dynamic>> favorites = [
+    {
+      'userId': 'u001',
+      'marketId': 'm001',
+      'addedAt': '2024-03-01',
+    },
+    {
+      'userId': 'u002',
+      'marketId': 'm002',
+      'addedAt': '2024-03-05',
+    },
+  ];
+
+  // ⬇️ เพิ่ม Notifications (สำหรับ Broadcast ของ Market Owner)
+  static final List<Map<String, dynamic>> notifications = [];
 }

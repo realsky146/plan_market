@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:plan_market/features/auth/signin_page.dart';
 
 import '../guest/home_page.dart';
 import '../guest/favorite_page.dart';
@@ -43,10 +44,14 @@ class _SelectRolePageState extends State<SelectRolePage> {
             MaterialPageRoute(builder: (_) => const HomePage()),
           );
           break;
-        case 3: // ร้านค้า ✅ เพิ่ม body
+        case 3: // ร้านค้า (ยังไม่มีหน้าจริง)
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => const MarketListPage()),
+            MaterialPageRoute(
+              builder: (_) => const Scaffold(
+                body: Center(child: Text('หน้าร้านค้า — Coming Soon')),
+              ),
+            ),
           );
           break;
         case 4: // โปรไฟล์ = อยู่หน้านี้แล้ว

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../guest/profile_page.dart';
-import '../auth/select_role_page.dart';
+import 'package:plan_market/features/auth/select_role_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'profile_page.dart'; // ✅ เปลี่ยนจาก select_role_page
 import 'favorite_page.dart';
 import 'home_page.dart';
 import 'market_detail_page.dart';
@@ -14,7 +16,7 @@ class MarketListPage extends StatefulWidget {
 }
 
 class _MarketListPageState extends State<MarketListPage> {
-  int currentIndex = 1; // ตลาด = index 1
+  int currentIndex = 1;
   String _searchText = '';
 
   final List<Map<String, dynamic>> _markets = [
@@ -30,6 +32,7 @@ class _MarketListPageState extends State<MarketListPage> {
       'availableStalls': 45,
       'tags': ['อาหาร', 'แฟชั่น', 'มือสอง'],
       'isFavorite': false,
+      'image': 'assets/images/market_chatuchak.jpg',
     },
     {
       'id': 'm002',
@@ -43,6 +46,7 @@ class _MarketListPageState extends State<MarketListPage> {
       'availableStalls': 20,
       'tags': ['อาหาร', 'ของสด'],
       'isFavorite': true,
+      'image': 'assets/images/market_rotfai.jpg',
     },
     {
       'id': 'm003',
@@ -56,40 +60,57 @@ class _MarketListPageState extends State<MarketListPage> {
       'availableStalls': 0,
       'tags': ['ของสด', 'อาหาร'],
       'isFavorite': false,
+      'image': 'assets/images/market_sevongo.jpg',
     },
   ];
 
+  // ✅ ลบ delay ออก
   void _navigateToPage(int index) {
     if (index == currentIndex) return;
-    setState(() => currentIndex = index);
 
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (!mounted) return;
-      switch (index) {
-        case 0:
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const FavoritePage()),
-          );
-          break;
-        case 1:
-          break;
-        case 2:
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const HomePage()),
-          );
-          break;
-        case 3:
-          break;
-        case 4:
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const SelectRolePage()),
-          );
-          break;
-      }
-    });
+    switch (index) {
+      case 0:
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (_) => const FavoritePage()));
+        break;
+      case 1:
+        break;
+      case 2:
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (_) => const HomePage()));
+        break;
+      case 3:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('🚧 ฟีเจอร์ร้านค้ากำลังมาเร็วๆนี้',
+                style: GoogleFonts.kanit()),
+          ),
+        );
+        break;
+      case 4:
+        _navigateToProfile();
+        break;
+    }
+  }
+
+// ✅ เพิ่ม method นี้ในทุกหน้า
+  Future<void> _navigateToProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    final role = prefs.getString('role');
+
+    if (!mounted) return;
+
+    if (role == null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const SelectRolePage()),
+      );
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const GuestProfilePage()),
+      );
+    }
   }
 
   @override
@@ -108,16 +129,13 @@ class _MarketListPageState extends State<MarketListPage> {
         body: SafeArea(
           child: Stack(
             children: [
-              // Wave Header
               SizedBox(
                 height: 140,
                 width: double.infinity,
                 child: CustomPaint(painter: _TopWavePainter()),
               ),
-
               Column(
                 children: [
-                  // Header
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
                     child: Text(
@@ -129,8 +147,6 @@ class _MarketListPageState extends State<MarketListPage> {
                       ),
                     ),
                   ),
-
-                  // Search
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                     child: TextField(
@@ -138,9 +154,8 @@ class _MarketListPageState extends State<MarketListPage> {
                       style: GoogleFonts.kanit(fontSize: 13),
                       decoration: InputDecoration(
                         hintText: 'ค้นหาตลาด...',
-                        hintStyle: GoogleFonts.kanit(
-                          color: const Color(0xFFBDBDBD),
-                        ),
+                        hintStyle:
+                            GoogleFonts.kanit(color: const Color(0xFFBDBDBD)),
                         prefixIcon: const Icon(Icons.search),
                         filled: true,
                         fillColor: Colors.white,
@@ -149,25 +164,25 @@ class _MarketListPageState extends State<MarketListPage> {
                           borderSide: BorderSide.none,
                         ),
                         contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
+                            horizontal: 16, vertical: 12),
                       ),
                     ),
                   ),
-
-                  // List
                   Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
-                      itemCount: filtered.length,
-                      itemBuilder: (_, i) => _buildMarketCard(filtered[i]),
-                    ),
+                    child: filtered.isEmpty
+                        ? Center(
+                            child: Text('ไม่พบตลาดที่ค้นหา',
+                                style: GoogleFonts.kanit(color: Colors.grey)),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+                            itemCount: filtered.length,
+                            itemBuilder: (_, i) =>
+                                _buildMarketCard(filtered[i]),
+                          ),
                   ),
                 ],
               ),
-
-              // Bottom Nav
               Positioned(
                 bottom: 0,
                 left: 0,
@@ -183,17 +198,12 @@ class _MarketListPageState extends State<MarketListPage> {
 
   Widget _buildMarketCard(Map<String, dynamic> market) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => MarketDetailPage(market: market),
-          ),
-        );
-      },
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => MarketDetailPage(market: market)),
+      ),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -207,108 +217,104 @@ class _MarketListPageState extends State<MarketListPage> {
         ),
         child: Row(
           children: [
-            Container(
-              width: 70,
-              height: 70,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE5E7EB),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.storefront_rounded,
-                color: Color(0xFF9CA3AF),
-                size: 32,
+            // ✅ เพิ่มรูปตลาด
+            ClipRRect(
+              borderRadius:
+                  const BorderRadius.horizontal(left: Radius.circular(16)),
+              child: SizedBox(
+                width: 90,
+                height: 90,
+                child: Image.asset(
+                  market['image'] ?? '',
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: const Color(0xFFE5E7EB),
+                    child: const Icon(Icons.storefront_rounded,
+                        color: Color(0xFF9CA3AF), size: 32),
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          market['name'],
-                          style: GoogleFonts.kanit(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            market['name'],
+                            style: GoogleFonts.kanit(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
                           ),
                         ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            market['isFavorite'] = !market['isFavorite'];
-                          });
-                        },
-                        child: Icon(
-                          market['isFavorite']
-                              ? Icons.favorite
-                              : Icons.favorite_border,
-                          color: market['isFavorite']
-                              ? Colors.redAccent
-                              : Colors.grey,
-                          size: 20,
+                        Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: GestureDetector(
+                            onTap: () => setState(() {
+                              market['isFavorite'] = !market['isFavorite'];
+                            }),
+                            child: Icon(
+                              market['isFavorite']
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: market['isFavorite']
+                                  ? Colors.redAccent
+                                  : Colors.grey,
+                              size: 20,
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    '📍 ${market['location']} (${market['distance']})',
-                    style: GoogleFonts.kanit(
-                      fontSize: 12,
-                      color: Colors.grey,
+                      ],
                     ),
-                  ),
-                  Text(
-                    '🕐 ${market['openTime']}',
-                    style: GoogleFonts.kanit(
-                      fontSize: 12,
-                      color: Colors.grey,
+                    Text(
+                      '📍 ${market['location']} (${market['distance']})',
+                      style:
+                          GoogleFonts.kanit(fontSize: 12, color: Colors.grey),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: market['isOpen']
-                              ? const Color(0xFFDFF7E6)
-                              : const Color(0xFFFEE2E2),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          market['isOpen'] ? '🟢 เปิดอยู่' : '🔴 ปิดแล้ว',
-                          style: GoogleFonts.kanit(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
+                    Text(
+                      '🕐 ${market['openTime']}',
+                      style:
+                          GoogleFonts.kanit(fontSize: 12, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
                             color: market['isOpen']
-                                ? const Color(0xFF0F7A36)
-                                : const Color(0xFFB91C1C),
+                                ? const Color(0xFFDFF7E6)
+                                : const Color(0xFFFEE2E2),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            market['isOpen'] ? '🟢 เปิดอยู่' : '🔴 ปิดแล้ว',
+                            style: GoogleFonts.kanit(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: market['isOpen']
+                                  ? const Color(0xFF0F7A36)
+                                  : const Color(0xFFB91C1C),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(
-                        Icons.star_rounded,
-                        color: Color(0xFFFFB000),
-                        size: 14,
-                      ),
-                      Text(
-                        ' ${market['rating']}',
-                        style: GoogleFonts.kanit(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                        const SizedBox(width: 8),
+                        const Icon(Icons.star_rounded,
+                            color: Color(0xFFFFB000), size: 14),
+                        Text(' ${market['rating']}',
+                            style: GoogleFonts.kanit(
+                                fontSize: 12, color: Colors.grey)),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -358,23 +364,16 @@ class _MarketListPageState extends State<MarketListPage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const SizedBox(height: 10),
-                          Icon(
-                            items[i]['icon'] as IconData,
-                            color: Colors.white.withOpacity(
-                              isSelected ? 0.0 : 0.8,
-                            ),
-                            size: 22,
-                          ),
+                          Icon(items[i]['icon'] as IconData,
+                              color: Colors.white
+                                  .withOpacity(isSelected ? 0.0 : 0.8),
+                              size: 22),
                           const SizedBox(height: 4),
-                          Text(
-                            items[i]['label'] as String,
-                            style: GoogleFonts.kanit(
-                              fontSize: 10,
-                              color: Colors.white.withOpacity(
-                                isSelected ? 0.0 : 0.8,
-                              ),
-                            ),
-                          ),
+                          Text(items[i]['label'] as String,
+                              style: GoogleFonts.kanit(
+                                  fontSize: 10,
+                                  color: Colors.white
+                                      .withOpacity(isSelected ? 0.0 : 0.8))),
                         ],
                       ),
                     ),
@@ -398,21 +397,15 @@ class _MarketListPageState extends State<MarketListPage> {
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 3),
                   ),
-                  child: Icon(
-                    items[currentIndex]['icon'] as IconData,
-                    color: Colors.white,
-                    size: 28,
-                  ),
+                  child: Icon(items[currentIndex]['icon'] as IconData,
+                      color: Colors.white, size: 28),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  items[currentIndex]['label'] as String,
-                  style: GoogleFonts.kanit(
-                    fontSize: 10,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                Text(items[currentIndex]['label'] as String,
+                    style: GoogleFonts.kanit(
+                        fontSize: 10,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold)),
               ],
             ),
           ),
@@ -428,24 +421,15 @@ class _TopWavePainter extends CustomPainter {
     final paint = Paint()
       ..color = const Color(0xFF73A34F)
       ..style = PaintingStyle.fill;
-
-    final path = Path();
-    path.moveTo(0, 0);
-    path.lineTo(0, size.height * 0.78);
-    path.quadraticBezierTo(
-      size.width * 0.18,
-      size.height * 0.98,
-      size.width * 0.52,
-      size.height * 0.56,
-    );
-    path.quadraticBezierTo(
-      size.width * 0.72,
-      size.height * 1.02,
-      size.width,
-      size.height * 0.72,
-    );
-    path.lineTo(size.width, 0);
-    path.close();
+    final path = Path()
+      ..moveTo(0, 0)
+      ..lineTo(0, size.height * 0.78)
+      ..quadraticBezierTo(size.width * 0.18, size.height * 0.98,
+          size.width * 0.52, size.height * 0.56)
+      ..quadraticBezierTo(
+          size.width * 0.72, size.height * 1.02, size.width, size.height * 0.72)
+      ..lineTo(size.width, 0)
+      ..close();
     canvas.drawPath(path, paint);
   }
 

@@ -40,8 +40,8 @@ class _GuestProfilePageState extends State<GuestProfilePage> {
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _userName = prefs.getString('userName') ?? 'reaaaaaa456';
-      _userEmail = prefs.getString('userEmail') ?? 'seeeeeeee@gmail.com';
+      _userName = prefs.getString('name') ?? 'ผู้ใช้งาน'; // ✅
+      _userEmail = prefs.getString('email') ?? ''; // ✅
       final imagePath = prefs.getString('profileImage');
       if (imagePath != null) _profileImage = File(imagePath);
     });
@@ -181,34 +181,33 @@ class _GuestProfilePageState extends State<GuestProfilePage> {
 
   void _navigateToPage(int index) {
     if (index == currentIndex) return;
-    setState(() => currentIndex = index);
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (!mounted) return;
-      switch (index) {
-        case 0:
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const FavoritePage()),
-          );
-          break;
-        case 1:
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const MarketListPage()),
-          );
-          break;
-        case 2:
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const HomePage()),
-          );
-          break;
-        case 3:
-          break;
-        case 4:
-          break;
-      }
-    });
+
+    switch (index) {
+      case 0:
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (_) => const FavoritePage()));
+        break;
+      case 1:
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (_) => const MarketListPage()));
+        break;
+      case 2:
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (_) => const HomePage()));
+        break;
+      case 3:
+        // ✅ เพิ่ม Snackbar แจ้ง
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('🚧 ฟีเจอร์ร้านค้ากำลังมาเร็วๆนี้',
+                style: GoogleFonts.kanit()),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        break;
+      case 4:
+        break; // อยู่หน้านี้แล้ว
+    }
   }
 
   @override

@@ -51,7 +51,6 @@ class _SignUpVendorPageState extends State<SignUpVendorPage> {
     _emailCtrl.dispose();
     _phoneCtrl.dispose();
     _descCtrl.dispose();
-    _extraCtrl.dispose();
     super.dispose();
   }
 

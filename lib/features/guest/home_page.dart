@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:plan_market/features/auth/select_role_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'favorite_page.dart';
 import 'market_list_page.dart';
 import 'market_detail_page.dart';
@@ -22,12 +25,12 @@ class _HomePageState extends State<HomePage> {
       'name': 'ร้านอาชียะ',
       'marketName': 'ตลาด : จตุจักร.',
       'isOpen': true,
-      'image': 'assets/images/market_chatuchak.jpg',
+      'image': 'assets/images/market_chatuchak.jpg.webp',
     },
     {
       'id': 'f002',
       'name': 'ร้านติวการส',
-      'marketName': 'ตลาด : ปากน้ำ',
+      'marketName': 'ตลาด : ปากเกร็ด',
       'isOpen': true,
       'image': 'assets/images/market_rotfai.jpg',
     },
@@ -43,7 +46,7 @@ class _HomePageState extends State<HomePage> {
       'name': 'ร้านสมชายข้าวต้ม',
       'marketName': 'ตลาด : สวนลุม',
       'isOpen': true,
-      'image': 'assets/images/market_chatuchak.jpg',
+      'image': 'assets/images/market.png',
     },
   ];
 
@@ -59,7 +62,7 @@ class _HomePageState extends State<HomePage> {
       'rating': 4.8,
       'isFavorite': false,
       'tags': ['อาหาร', 'แฟชั่น', 'มือสอง'],
-      'image': 'assets/images/market_chatuchak.jpg',
+      'image': '../',
     },
     {
       'id': 'm002',
@@ -87,45 +90,62 @@ class _HomePageState extends State<HomePage> {
     },
   ];
 
+  // ── Navigation ─────────────────────────────────────────────
   void _navigateToPage(int index) {
     if (index == currentIndex) return;
-    setState(() => currentIndex = index);
 
-    Future.delayed(const Duration(milliseconds: 200), () {
-      if (!mounted) return;
-      switch (index) {
-        case 0:
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const FavoritePage()),
-          );
-          break;
-        case 1:
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const MarketListPage()),
-          );
-          break;
-        case 2:
-          break;
-        case 3:
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                '🚧 ฟีเจอร์ร้านค้ากำลังมาเร็วๆนี้',
-                style: GoogleFonts.kanit(),
-              ),
+    switch (index) {
+      case 0:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const FavoritePage()),
+        );
+        break;
+      case 1:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MarketListPage()),
+        );
+        break;
+      case 2:
+        break; // อยู่หน้านี้แล้ว
+      case 3:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '🚧 ฟีเจอร์ร้านค้ากำลังมาเร็วๆนี้',
+              style: GoogleFonts.kanit(),
             ),
-          );
-          break;
-        case 4:
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const GuestProfilePage()),
-          );
-          break;
-      }
-    });
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        break;
+      case 4:
+        // ✅ เช็ค session ก่อน
+        _navigateToProfile();
+        break;
+    }
+  }
+
+  Future<void> _navigateToProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    final role = prefs.getString('role');
+
+    if (!mounted) return;
+
+    if (role == null) {
+      // ❌ ไม่มี session → ยังไม่ได้ login → ไปเลือกโหมด
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const SelectRolePage()),
+      );
+    } else {
+      // ✅ มี session → เคย login แล้ว → ไปหน้าโปรไฟล์
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const GuestProfilePage()),
+      );
+    }
   }
 
   @override
@@ -166,7 +186,8 @@ class _HomePageState extends State<HomePage> {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                     child: GestureDetector(
-                      onTap: () => Navigator.pushReplacement(
+                      // ✅ แก้: ใช้ push แทน pushReplacement → กดกลับได้
+                      onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (_) => const MarketListPage(),
@@ -214,10 +235,8 @@ class _HomePageState extends State<HomePage> {
                     child: ListView(
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                       children: [
-                        // ร้านที่ถูกใจ Section
                         _buildFavoriteSection(),
                         const SizedBox(height: 20),
-                        // ตลาดแนะนำ Section
                         _buildRecommendSection(),
                       ],
                     ),
@@ -246,7 +265,6 @@ class _HomePageState extends State<HomePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header row
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -273,17 +291,14 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
         const SizedBox(height: 12),
-
-        // ✅ Horizontal scroll cards + ปุ่มดูร้านอื่นๆ
         SizedBox(
           height: 170,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            itemCount: _favorites.length + 1, // +1 สำหรับปุ่มดูร้านอื่นๆ
+            itemCount: _favorites.length + 1,
             separatorBuilder: (_, __) => const SizedBox(width: 12),
             itemBuilder: (_, i) {
               if (i == _favorites.length) {
-                // ปุ่มดูร้านอื่นๆที่ถูกใจ
                 return _buildViewMoreFavoriteButton();
               }
               return _buildFavoriteCard(_favorites[i]);
@@ -294,9 +309,10 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ปุ่ม "ดูร้านอื่นๆ" ที่อยู่ท้ายรายการร้านถูกใจ
+  // ── ปุ่ม "ดูร้านอื่นๆ" ────────────────────────────────────
   Widget _buildViewMoreFavoriteButton() {
     return GestureDetector(
+      // ✅ แก้: ใช้ push แทน (กดกลับได้)
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const FavoritePage()),
@@ -356,12 +372,17 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // ── Favorite Card ──────────────────────────────────────────
   Widget _buildFavoriteCard(Map<String, dynamic> shop) {
     return GestureDetector(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const FavoritePage()),
-      ),
+      // ✅ แก้: กดแล้วไปหน้ารายละเอียดร้าน (ไม่ใช่ FavoritePage)
+      onTap: () {
+        // TODO: เปลี่ยนเป็น ShopDetailPage เมื่อทำเสร็จ
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const FavoritePage()),
+        );
+      },
       child: Container(
         width: 155,
         decoration: BoxDecoration(
@@ -378,25 +399,22 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // รูปร้าน
+            // ✅ แก้: ใช้ SizedBox แทน Container (ไม่ต้องครอบซ้อน)
             ClipRRect(
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(16),
               ),
-              child: Container(
+              child: SizedBox(
                 height: 90,
                 width: double.infinity,
                 child: Image.asset(
                   shop['image'] ?? '',
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
+                  errorBuilder: (_, __, ___) {
                     return Container(
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [
-                            const Color(0xFF1B5E20),
-                            const Color(0xFF8CBC63).withOpacity(0.8),
-                          ],
+                          colors: [Color(0xFF1B5E20), Color(0xFF8CBC63)],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
@@ -441,41 +459,7 @@ class _HomePageState extends State<HomePage> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const Spacer(),
-                    // Status Badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: shop['isOpen']
-                            ? const Color(0xFF8CBC63)
-                            : Colors.grey,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            shop['isOpen'] ? 'เปิดอยู่' : 'ปิดแล้ว',
-                            style: GoogleFonts.kanit(
-                              fontSize: 10,
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    _buildStatusBadge(shop['isOpen'] ?? false),
                   ],
                 ),
               ),
@@ -516,7 +500,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             ),
-            // ปุ่ม ใกล้ที่สุด Nearest
+            // ✅ ปุ่ม ใกล้ที่สุด — ตรงตามแบบ
             Container(
               padding: const EdgeInsets.symmetric(
                 horizontal: 12,
@@ -551,13 +535,12 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
         const SizedBox(height: 12),
-
-        // Market Cards
         ..._markets.map((market) => _buildMarketCard(market)),
       ],
     );
   }
 
+  // ── Market Card ────────────────────────────────────────────
   Widget _buildMarketCard(Map<String, dynamic> market) {
     return GestureDetector(
       onTap: () => Navigator.push(
@@ -593,14 +576,11 @@ class _HomePageState extends State<HomePage> {
                   child: Image.asset(
                     market['image'] ?? '',
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
+                    errorBuilder: (_, __, ___) {
                       return Container(
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [
-                              const Color(0xFF1B5E20),
-                              const Color(0xFF8CBC63).withOpacity(0.7),
-                            ],
+                            colors: [Color(0xFF1B5E20), Color(0xFF8CBC63)],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -626,7 +606,7 @@ class _HomePageState extends State<HomePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Status badge + ชื่อ
+                      // ชื่อ + Status badge
                       Row(
                         children: [
                           Expanded(
@@ -636,43 +616,12 @@ class _HomePageState extends State<HomePage> {
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          // Status badge ย้ายมาอยู่ข้างชื่อ
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: market['isOpen']
-                                  ? const Color(0xFF8CBC63)
-                                  : Colors.grey,
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  market['isOpen'] ? 'เปิดอยู่' : 'ปิดแล้ว',
-                                  style: GoogleFonts.kanit(
-                                    fontSize: 10,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          const SizedBox(width: 6),
+                          _buildStatusBadge(market['isOpen'] ?? false),
                         ],
                       ),
                       const SizedBox(height: 4),
@@ -685,7 +634,8 @@ class _HomePageState extends State<HomePage> {
                           color: Colors.grey,
                         ),
                       ),
-                      // วันนี้เวลา
+
+                      // เวลา
                       Text(
                         'วันนี้ ${market['openTime']}',
                         style: GoogleFonts.kanit(
@@ -701,26 +651,7 @@ class _HomePageState extends State<HomePage> {
                         runSpacing: 4,
                         children: (market['tags'] as List<String>)
                             .take(3)
-                            .map(
-                              (tag) => Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFFF3CD),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  tag,
-                                  style: GoogleFonts.kanit(
-                                    fontSize: 11,
-                                    color: const Color(0xFFB45309),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            )
+                            .map((tag) => _buildTag(tag))
                             .toList(),
                       ),
                     ],
@@ -735,7 +666,61 @@ class _HomePageState extends State<HomePage> {
   }
 
   // ══════════════════════════════════════════════════════════
-  // Bottom Nav - ปรับ hover ไปคลุมปุ่มถูกใจ (index 0)
+  // ✅ Reusable Widgets — แยกออกมาลดโค้ดซ้ำ
+  // ══════════════════════════════════════════════════════════
+
+  Widget _buildStatusBadge(bool isOpen) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: isOpen ? const Color(0xFF8CBC63) : Colors.grey,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            isOpen ? 'เปิดอยู่' : 'ปิดแล้ว',
+            style: GoogleFonts.kanit(
+              fontSize: 10,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTag(String tag) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF3CD),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        tag,
+        style: GoogleFonts.kanit(
+          fontSize: 11,
+          color: const Color(0xFFB45309),
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // Bottom Nav
   // ══════════════════════════════════════════════════════════
   Widget _buildBottomNav() {
     final items = [
@@ -780,9 +765,8 @@ class _HomePageState extends State<HomePage> {
                           const SizedBox(height: 10),
                           Icon(
                             items[i]['icon'] as IconData,
-                            color: Colors.white.withOpacity(
-                              isSelected ? 0.0 : 0.8,
-                            ),
+                            color: Colors.white
+                                .withOpacity(isSelected ? 0.0 : 0.8),
                             size: 22,
                           ),
                           const SizedBox(height: 4),
@@ -790,9 +774,8 @@ class _HomePageState extends State<HomePage> {
                             items[i]['label'] as String,
                             style: GoogleFonts.kanit(
                               fontSize: 10,
-                              color: Colors.white.withOpacity(
-                                isSelected ? 0.0 : 0.8,
-                              ),
+                              color: Colors.white
+                                  .withOpacity(isSelected ? 0.0 : 0.8),
                             ),
                           ),
                         ],
@@ -862,23 +845,23 @@ class _TopWavePainter extends CustomPainter {
       ..color = const Color(0xFF8CBC63)
       ..style = PaintingStyle.fill;
 
-    final path = Path();
-    path.moveTo(0, 0);
-    path.lineTo(0, size.height * 0.75);
-    path.quadraticBezierTo(
-      size.width * 0.25,
-      size.height,
-      size.width * 0.5,
-      size.height * 0.85,
-    );
-    path.quadraticBezierTo(
-      size.width * 0.75,
-      size.height * 0.7,
-      size.width,
-      size.height * 0.9,
-    );
-    path.lineTo(size.width, 0);
-    path.close();
+    final path = Path()
+      ..moveTo(0, 0)
+      ..lineTo(0, size.height * 0.75)
+      ..quadraticBezierTo(
+        size.width * 0.25,
+        size.height,
+        size.width * 0.5,
+        size.height * 0.85,
+      )
+      ..quadraticBezierTo(
+        size.width * 0.75,
+        size.height * 0.7,
+        size.width,
+        size.height * 0.9,
+      )
+      ..lineTo(size.width, 0)
+      ..close();
 
     canvas.drawPath(path, paint);
   }

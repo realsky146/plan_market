@@ -3,12 +3,21 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../services/auth_service.dart';
-import '../guest/profile_page.dart';
+import '../guest/home_page.dart';
+import '../vendor/vendor_home.dart';
 
 class SignUpPage extends StatefulWidget {
+  final String role;
+  const SignUpPage({super.key, required this.role});
+
+  @override
+  State<SignUpPage> createState() => _SignUpPageState();
+}
+
+class _SignUpPage extends StatefulWidget {
   final String role; // ✅ เพิ่ม field เก็บ role
 
-  const SignUpPage({super.key, required this.role}); // ✅ this.role
+  const _SignUpPage({super.key, required this.role}); // ✅ this.role
 
   @override
   State<SignUpPage> createState() => _SignUpPageState();
@@ -61,19 +70,29 @@ class _SignUpPageState extends State<SignUpPage> {
         setState(() => _loading = false);
 
         if (result['success'] == true) {
-          // บันทึก session
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('role', widget.role);
           await prefs.setString('status', 'active');
           await prefs.setString('email', _emailCtrl.text.trim());
+          await prefs.setString('userId', result['userId'] ?? ''); // ✅ เพิ่ม
 
           if (!mounted) return;
 
+          // ✅ Route ตาม role แทนที่จะไป Profile ตรง ๆ
+          Widget page;
+          switch (widget.role) {
+            case 'vendor':
+              page = const VendorHome();
+              break;
+            case 'customer':
+            default:
+              page = const HomePage();
+              break;
+          }
+
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(
-              builder: (_) => const GuestProfilePage(),
-            ),
+            MaterialPageRoute(builder: (_) => page),
             (route) => false,
           );
         } else {

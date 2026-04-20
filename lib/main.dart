@@ -54,7 +54,6 @@ class _SplashRouterState extends State<SplashRouter> {
 
     if (!mounted) return;
 
-    // ✅ ไม่มี session → HomePage (Guest)
     if (role == null) {
       _go(const HomePage());
       return;
@@ -71,8 +70,8 @@ class _SplashRouterState extends State<SplashRouter> {
         } else if (status == 'pending') {
           _go(const MarketPendingPage());
         } else {
-          // rejected → ล้าง session → HomePage
           await prefs.clear();
+          if (!mounted) return;
           _go(const HomePage());
         }
         break;
@@ -82,8 +81,8 @@ class _SplashRouterState extends State<SplashRouter> {
         break;
 
       case 'customer':
-        // ✅ customer → GuestProfilePage
-        _go(const GuestProfilePage());
+        // ✅ แก้: ไปหน้า Home แทน Profile
+        _go(const HomePage());
         break;
 
       default:
@@ -98,6 +97,7 @@ class _SplashRouterState extends State<SplashRouter> {
     );
   }
 
+  // ✅ เพิ่ม: Splash Screen UI (แทนจอขาว)
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -106,38 +106,25 @@ class _SplashRouterState extends State<SplashRouter> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: const Icon(
-                Icons.store_mall_directory_rounded,
-                size: 56,
-                color: Color(0xFF8CBC63),
-              ),
+            // โลโก้หรือไอคอน
+            const Icon(
+              Icons.storefront_rounded,
+              size: 80,
+              color: Colors.white,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             Text(
               'Plan Market',
               style: GoogleFonts.kanit(
-                fontSize: 32,
+                fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
             ),
-            Text(
-              'บริหารจัดการตลาดนัด',
-              style: GoogleFonts.kanit(
-                fontSize: 16,
-                color: Colors.white70,
-              ),
-            ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 24),
             const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              color: Colors.white,
+              strokeWidth: 2,
             ),
           ],
         ),

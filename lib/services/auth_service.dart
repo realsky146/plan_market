@@ -2,6 +2,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'mock_data.dart';
 
 class AuthService {
+  // ══════════════════════════════════════════════════════════
+  // ✅ signIn — ใช้แค่ email, password, role (ไม่มี name, phone)
+  // ══════════════════════════════════════════════════════════
   Future<Map<String, dynamic>> signIn({
     required String email,
     required String password,
@@ -16,7 +19,7 @@ class AuthService {
         (u) =>
             u['email'] == email &&
             u['password'] == password &&
-            (u['role'] == lookupRole || u['role'] == role),
+            u['role'] == lookupRole,
         orElse: () => <String, dynamic>{},
       );
 
@@ -41,7 +44,9 @@ class AuthService {
     }
   }
 
-  // --- Sign Up Customer ---
+  // ══════════════════════════════════════════════════════════
+  // ✅ signUp — ใช้ name, email, password, phone, role
+  // ══════════════════════════════════════════════════════════
   Future<Map<String, dynamic>> signUp({
     required String name,
     required String email,
@@ -49,11 +54,43 @@ class AuthService {
     required String phone,
     required String role,
   }) async {
-    // ... (โค้ดเดิมของคุณ ทำงานได้ดีแล้ว)
-    return {'success': true, 'role': role};
+    await Future.delayed(const Duration(milliseconds: 800));
+
+    try {
+      // เช็คอีเมลซ้ำ
+      final existing = MockData.users.any((u) => u['email'] == email);
+      if (existing) {
+        return {'success': false, 'message': 'อีเมลนี้ถูกใช้แล้ว'};
+      }
+
+      final newId = 'u${DateTime.now().millisecondsSinceEpoch}';
+
+      final newUser = {
+        'id': newId,
+        'name': name,
+        'email': email,
+        'password': password,
+        'role': role,
+        'status': 'active',
+        'phone': phone,
+        'createdAt': DateTime.now().toIso8601String(),
+      };
+
+      MockData.users.add(newUser);
+
+      return {
+        'success': true,
+        'role': role,
+        'userId': newId,
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'เกิดข้อผิดพลาด: $e'};
+    }
   }
 
-  // --- Sign Up Market ---
+  // ══════════════════════════════════════════════════════════
+  // ✅ signUpMarket — สมัครเจ้าของตลาด
+  // ══════════════════════════════════════════════════════════
   Future<Map<String, dynamic>> signUpMarket({
     required String marketName,
     required String ownerName,
@@ -63,30 +100,71 @@ class AuthService {
     required String location,
     required String description,
   }) async {
-    // ... (โค้ดเดิมของคุณ ทำงานได้ดีแล้ว)
-    return {'success': true, 'role': 'market_owner'};
+    await Future.delayed(const Duration(milliseconds: 800));
+
+    try {
+      final existing = MockData.users.any((u) => u['email'] == email);
+      if (existing) {
+        return {'success': false, 'message': 'อีเมลนี้ถูกใช้แล้ว'};
+      }
+
+      final newUserId = 'u${DateTime.now().millisecondsSinceEpoch}';
+      final newMarketId = 'm${DateTime.now().millisecondsSinceEpoch}';
+
+      MockData.users.add({
+        'id': newUserId,
+        'name': ownerName,
+        'email': email,
+        'password': password,
+        'role': 'market_owner',
+        'status': 'pending',
+        'phone': phone,
+        'marketName': marketName,
+        'createdAt': DateTime.now().toIso8601String(),
+      });
+
+      MockData.markets.add({
+        'id': newMarketId,
+        'name': marketName,
+        'ownerId': newUserId,
+        'status': 'pending',
+        'location': location,
+        'description': description,
+        'createdAt': DateTime.now().toIso8601String(),
+      });
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('role', 'market_owner');
+      await prefs.setString('status', 'pending');
+      await prefs.setString('email', email);
+      await prefs.setString('userId', newUserId);
+
+      return {'success': true, 'role': 'market_owner', 'status': 'pending'};
+    } catch (e) {
+      return {'success': false, 'message': 'เกิดข้อผิดพลาด: $e'};
+    }
   }
 
+  // ══════════════════════════════════════════════════════════
+  // ✅ logout
+  // ══════════════════════════════════════════════════════════
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
   }
 
+  // ══════════════════════════════════════════════════════════
+  // ✅ getCurrentUser
+  // ══════════════════════════════════════════════════════════
   Future<Map<String, dynamic>?> getCurrentUser() async {
     final prefs = await SharedPreferences.getInstance();
     final email = prefs.getString('email');
     if (email == null) return null;
-    return MockData.users.firstWhere((u) => u['email'] == email,
-        orElse: () => <String, dynamic>{});
-  }
 
-  Future<Map<String, String?>> getSession() async {
-    final prefs = await SharedPreferences.getInstance();
-    return {
-      'role': prefs.getString('role'),
-      'status': prefs.getString('status'),
-      'email': prefs.getString('email'),
-      'userId': prefs.getString('userId'),
-    };
+    try {
+      return MockData.users.firstWhere((u) => u['email'] == email);
+    } catch (_) {
+      return null;
+    }
   }
 }
