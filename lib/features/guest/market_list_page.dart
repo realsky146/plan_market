@@ -391,7 +391,7 @@ class _MarketListPageState extends State<MarketListPage> {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
                     child: Text(
-                      '🏪 ตลาดทั้งหมด',
+                      'ตลาดทั้งหมด',
                       style: GoogleFonts.kanit(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:plan_market/features/vendor/vendor_shop_info_page.dart';
 import 'vendor_home.dart';
 import 'favorite_vendor_page.dart';
 import 'profile_vendor_page.dart';
@@ -16,36 +17,35 @@ class _VendorMarketListPageState extends State<VendorMarketListPage> {
   int currentIndex = 1;
   String _selectedFilter = 'แนะนำ';
   final _searchCtrl = TextEditingController();
+  String _searchText = '';
 
-  final _filters = [
-    'แนะนำ',
-    'ใกล้ฉัน',
-    'คนเยอะ',
-    'ราคาถูก',
-    'เปิดอยู่',
-  ];
+  final _filters = ['แนะนำ', 'ใกล้ฉัน', 'คนเยอะ', 'ราคาถูก', 'เปิดอยู่'];
 
-  // Mock ตลาดแนะนำ (พร้อมข้อมูลที่ร้านค้าสนใจ)
-  final _markets = [
+  // 🔌 Mock ตลาด (ดึงจาก API ทีหลัง)
+  final List<Map<String, dynamic>> _markets = [
     {
       'id': 'm001',
       'name': 'ตลาดจตุจักร (โซนกลางคืน)',
       'distance': '1.2 กม.',
+      'location': 'จตุจักร กรุงเทพฯ',
       'time': '17:00 - 23:00 น.',
       'isOpen': true,
       'tags': ['อาหาร', 'แฟชั่น', 'มือสอง'],
       'stallsAvailable': 12,
       'totalStalls': 120,
       'pricePerDay': 300,
-      'traffic': 'สูง', // traffic คนเดินเยอะ
+      'traffic': 'สูง',
       'rating': 4.8,
       'isFavorite': true,
-      'reason': 'ใกล้คุณที่สุด', // เหตุผลแนะนำ
+      'reason': 'ใกล้คุณที่สุด',
+      'image':
+          'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400',
     },
     {
       'id': 'm002',
       'name': 'ตลาดนัดรถไฟ',
       'distance': '4.2 กม.',
+      'location': 'รามอินทรา กรุงเทพฯ',
       'time': '18:00 - 23:00 น.',
       'isOpen': true,
       'tags': ['อาหาร', 'แฟชั่น', 'มือสอง'],
@@ -56,11 +56,14 @@ class _VendorMarketListPageState extends State<VendorMarketListPage> {
       'rating': 4.9,
       'isFavorite': false,
       'reason': 'คนเดินเยอะที่สุด',
+      'image':
+          'https://images.unsplash.com/photo-1533900298318-6b8da08a523e?w=400',
     },
     {
       'id': 'm003',
       'name': 'ตลาดเซฟวันโก',
       'distance': '7.2 กม.',
+      'location': 'สวนหลวง กรุงเทพฯ',
       'time': '17:00 - 23:00 น.',
       'isOpen': false,
       'tags': ['อาหาร', 'ของใช้'],
@@ -71,11 +74,14 @@ class _VendorMarketListPageState extends State<VendorMarketListPage> {
       'rating': 4.5,
       'isFavorite': false,
       'reason': 'แผงว่างเยอะ',
+      'image':
+          'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400',
     },
     {
       'id': 'm004',
       'name': 'ตลาดนัดสวนหลวง',
       'distance': '3.5 กม.',
+      'location': 'พระราม 4 กรุงเทพฯ',
       'time': '16:00 - 22:00 น.',
       'isOpen': true,
       'tags': ['อาหาร', 'เสื้อผ้า'],
@@ -86,13 +92,29 @@ class _VendorMarketListPageState extends State<VendorMarketListPage> {
       'rating': 4.6,
       'isFavorite': false,
       'reason': 'ราคาถูกที่สุด',
+      'image':
+          'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=400',
     },
   ];
 
+  // ── Filter ────────────────────────────────────────────
   List<Map<String, dynamic>> get _filteredMarkets {
     var list = List<Map<String, dynamic>>.from(_markets);
 
-    // กรองตาม filter
+    // Search
+    if (_searchText.isNotEmpty) {
+      list = list
+          .where((m) =>
+              m['name'].toString().toLowerCase().contains(
+                    _searchText.toLowerCase(),
+                  ) ||
+              m['location'].toString().toLowerCase().contains(
+                    _searchText.toLowerCase(),
+                  ))
+          .toList();
+    }
+
+    // Filter
     switch (_selectedFilter) {
       case 'ใกล้ฉัน':
         list.sort((a, b) {
@@ -120,6 +142,7 @@ class _VendorMarketListPageState extends State<VendorMarketListPage> {
     return list;
   }
 
+  // ── Navigation ────────────────────────────────────────
   void _navigateToPage(int index) {
     if (index == currentIndex) return;
     setState(() => currentIndex = index);
@@ -133,6 +156,10 @@ class _VendorMarketListPageState extends State<VendorMarketListPage> {
         case 2:
           Navigator.pushReplacement(
               context, MaterialPageRoute(builder: (_) => const VendorHome()));
+          break;
+        case 3:
+          Navigator.pushReplacement(context,
+              MaterialPageRoute(builder: (_) => const VendorShopInfoPage()));
           break;
         case 4:
           Navigator.pushReplacement(context,
@@ -148,6 +175,9 @@ class _VendorMarketListPageState extends State<VendorMarketListPage> {
     super.dispose();
   }
 
+  // ══════════════════════════════════════════════════════
+  // Build
+  // ══════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
     return Theme(
@@ -159,7 +189,7 @@ class _VendorMarketListPageState extends State<VendorMarketListPage> {
         body: SafeArea(
           child: Stack(
             children: [
-              // Header
+              // Wave Header
               SizedBox(
                 height: 160,
                 width: double.infinity,
@@ -168,50 +198,59 @@ class _VendorMarketListPageState extends State<VendorMarketListPage> {
 
               Column(
                 children: [
-                  // หัวข้อ + Search
+                  // ── Header ──────────────────────────────
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('ตลาดแนะนำสำหรับคุณ',
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white)),
-                        const SizedBox(height: 10),
-
-                        // Search bar
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 11),
-                          decoration: BoxDecoration(
+                        Text(
+                          '🏪 ตลาดแนะนำสำหรับคุณ',
+                          style: GoogleFonts.kanit(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(30),
-                            boxShadow: [
-                              BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4)),
-                            ],
                           ),
-                          child: const Row(
-                            children: [
-                              Icon(Icons.search,
-                                  color: Color(0xFF9CA3AF), size: 20),
-                              SizedBox(width: 10),
-                              Text('ค้นหาตลาด...',
-                                  style: TextStyle(
-                                      color: Color(0xFF9CA3AF), fontSize: 14)),
-                            ],
+                        ),
+                        const SizedBox(height: 10),
+                        // ── Search Bar ─────────────────────
+                        TextField(
+                          controller: _searchCtrl,
+                          onChanged: (v) => setState(() => _searchText = v),
+                          style: GoogleFonts.kanit(fontSize: 13),
+                          decoration: InputDecoration(
+                            hintText: 'ค้นหาตลาด / เขต...',
+                            hintStyle: GoogleFonts.kanit(
+                                color: const Color(0xFF9CA3AF)),
+                            prefixIcon: const Icon(Icons.search,
+                                color: Color(0xFF9CA3AF), size: 20),
+                            suffixIcon: _searchText.isNotEmpty
+                                ? GestureDetector(
+                                    onTap: () {
+                                      _searchCtrl.clear();
+                                      setState(() => _searchText = '');
+                                    },
+                                    child: const Icon(Icons.close,
+                                        color: Color(0xFF9CA3AF), size: 18),
+                                  )
+                                : null,
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(30),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
                           ),
                         ),
                       ],
                     ),
                   ),
+
                   const SizedBox(height: 10),
 
-                  // Filter chips
+                  // ── Filter Chips ─────────────────────────
                   SizedBox(
                     height: 40,
                     child: ListView.separated(
@@ -224,41 +263,56 @@ class _VendorMarketListPageState extends State<VendorMarketListPage> {
                         final selected = _selectedFilter == f;
                         return GestureDetector(
                           onTap: () => setState(() => _selectedFilter = f),
-                          child: Container(
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 8),
                             decoration: BoxDecoration(
+                              color: selected
+                                  ? const Color(0xFF6E9B4C)
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
                                 color: selected
                                     ? const Color(0xFF6E9B4C)
-                                    : Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                    color: selected
-                                        ? const Color(0xFF6E9B4C)
-                                        : const Color(0xFFE5E7EB))),
-                            child: Text(f,
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: selected
-                                        ? Colors.white
-                                        : const Color(0xFF6B7280))),
+                                    : const Color(0xFFE5E7EB),
+                              ),
+                            ),
+                            child: Text(
+                              f,
+                              style: GoogleFonts.kanit(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: selected
+                                    ? Colors.white
+                                    : const Color(0xFF6B7280),
+                              ),
+                            ),
                           ),
                         );
                       },
                     ),
                   ),
+
                   const SizedBox(height: 10),
 
-                  // รายการตลาด
+                  // ── Market List ──────────────────────────
                   Expanded(
-                    child: ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
-                      itemCount: _filteredMarkets.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (_, i) =>
-                          _buildMarketCard(_filteredMarkets[i]),
-                    ),
+                    child: _filteredMarkets.isEmpty
+                        ? Center(
+                            child: Text(
+                              'ไม่พบตลาดที่ค้นหา',
+                              style: GoogleFonts.kanit(color: Colors.grey),
+                            ),
+                          )
+                        : ListView.separated(
+                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+                            itemCount: _filteredMarkets.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 12),
+                            itemBuilder: (_, i) =>
+                                _buildMarketCard(_filteredMarkets[i]),
+                          ),
                   ),
                 ],
               ),
@@ -277,7 +331,9 @@ class _VendorMarketListPageState extends State<VendorMarketListPage> {
     );
   }
 
-  // ===== Market Card =====
+  // ══════════════════════════════════════════════════════
+  // Market Card
+  // ══════════════════════════════════════════════════════
   Widget _buildMarketCard(Map<String, dynamic> m) {
     final isOpen = m['isOpen'] as bool;
     final tags = m['tags'] as List<String>;
@@ -285,8 +341,8 @@ class _VendorMarketListPageState extends State<VendorMarketListPage> {
     final total = m['totalStalls'] as int;
     final traffic = m['traffic'] as String;
     final isFavorite = m['isFavorite'] as bool;
+    final rating = m['rating'] as double;
 
-    // สี traffic
     Color trafficColor;
     switch (traffic) {
       case 'สูงมาก':
@@ -305,9 +361,10 @@ class _VendorMarketListPageState extends State<VendorMarketListPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 4)),
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
@@ -320,19 +377,45 @@ class _VendorMarketListPageState extends State<VendorMarketListPage> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // รูปตลาด
+                    // ✅ รูปตลาดจาก Network
                     Stack(
                       children: [
-                        Container(
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: SizedBox(
                             width: 80,
                             height: 80,
-                            decoration: BoxDecoration(
-                                color: const Color(0xFFE5E7EB),
-                                borderRadius: BorderRadius.circular(12)),
-                            child: const Icon(Icons.storefront,
-                                color: Color(0xFF9CA3AF), size: 36)),
-
-                        // badge เปิด/ปิด
+                            child: Image.network(
+                              m['image'] ?? '',
+                              fit: BoxFit.cover,
+                              loadingBuilder: (_, child, p) {
+                                if (p == null) return child;
+                                return Container(
+                                  width: 80,
+                                  height: 80,
+                                  color: Colors.grey,
+                                  child: const Center(
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Color(0xFF8CBC63),
+                                    ),
+                                  ),
+                                );
+                              },
+                              errorBuilder: (_, __, ___) => Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE5E7EB),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(Icons.storefront,
+                                    color: Color(0xFF9CA3AF), size: 36),
+                              ),
+                            ),
+                          ),
+                        ),
+                        // ✅ Badge เปิด/ปิด
                         Positioned(
                           top: 4,
                           right: 4,
@@ -340,16 +423,18 @@ class _VendorMarketListPageState extends State<VendorMarketListPage> {
                             width: 10,
                             height: 10,
                             decoration: BoxDecoration(
-                                color: isOpen
-                                    ? const Color(0xFF22C55E)
-                                    : const Color(0xFFEF4444),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                    color: Colors.white, width: 1.5)),
+                              color: isOpen
+                                  ? const Color(0xFF22C55E)
+                                  : const Color(0xFFEF4444),
+                              shape: BoxShape.circle,
+                              border:
+                                  Border.all(color: Colors.white, width: 1.5),
+                            ),
                           ),
                         ),
                       ],
                     ),
+
                     const SizedBox(width: 12),
 
                     Expanded(
@@ -361,57 +446,90 @@ class _VendorMarketListPageState extends State<VendorMarketListPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Expanded(
-                                  child: Text(m['name'] as String,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14))),
+                                child: Text(
+                                  m['name'] as String,
+                                  style: GoogleFonts.kanit(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: const Color(0xFF1F2937),
+                                  ),
+                                ),
+                              ),
                               GestureDetector(
-                                  onTap: () => setState(
-                                      () => m['isFavorite'] = !isFavorite),
-                                  child: Icon(
-                                      isFavorite
-                                          ? Icons.favorite
-                                          : Icons.favorite_border,
-                                      color: isFavorite
-                                          ? const Color(0xFFEF4444)
-                                          : const Color(0xFF9CA3AF),
-                                      size: 20)),
+                                onTap: () => setState(
+                                    () => m['isFavorite'] = !isFavorite),
+                                child: Icon(
+                                  isFavorite
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
+                                  color: isFavorite
+                                      ? const Color(0xFFEF4444)
+                                      : const Color(0xFF9CA3AF),
+                                  size: 20,
+                                ),
+                              ),
                             ],
                           ),
-                          const SizedBox(height: 4),
+
+                          const SizedBox(height: 2),
 
                           // ระยะทาง + เวลา
                           Row(
                             children: [
                               const Icon(Icons.location_on,
                                   size: 12, color: Color(0xFF9CA3AF)),
-                              const SizedBox(width: 4),
-                              Text(m['distance'] as String,
-                                  style: const TextStyle(
-                                      fontSize: 12, color: Color(0xFF6B7280))),
-                              const SizedBox(width: 10),
+                              const SizedBox(width: 2),
+                              Text(
+                                '${m['distance']}',
+                                style: GoogleFonts.kanit(
+                                  fontSize: 11,
+                                  color: const Color(0xFF6B7280),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
                               const Icon(Icons.access_time,
                                   size: 12, color: Color(0xFF9CA3AF)),
-                              const SizedBox(width: 4),
-                              Text(m['time'] as String,
-                                  style: const TextStyle(
-                                      fontSize: 12, color: Color(0xFF6B7280))),
+                              const SizedBox(width: 2),
+                              Expanded(
+                                child: Text(
+                                  m['time'] as String,
+                                  style: GoogleFonts.kanit(
+                                    fontSize: 11,
+                                    color: const Color(0xFF6B7280),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
                             ],
                           ),
+
                           const SizedBox(height: 6),
 
-                          // Stats row
+                          // Stats: แผงว่าง + Traffic + Rating
                           Row(
                             children: [
-                              // แผงว่าง
                               _miniStat(
-                                  Icons.grid_view,
-                                  'ว่าง $available/$total',
-                                  const Color(0xFF2D9CDB)),
-                              const SizedBox(width: 10),
-                              // Traffic
+                                Icons.grid_view,
+                                'ว่าง $available/$total',
+                                const Color(0xFF2D9CDB),
+                              ),
+                              const SizedBox(width: 8),
                               _miniStat(
-                                  Icons.people, 'คน: $traffic', trafficColor),
+                                Icons.people,
+                                'คน: $traffic',
+                                trafficColor,
+                              ),
+                              const SizedBox(width: 8),
+                              const Icon(Icons.star_rounded,
+                                  size: 12, color: Color(0xFFFFB000)),
+                              Text(
+                                ' $rating',
+                                style: GoogleFonts.kanit(
+                                  fontSize: 11,
+                                  color: Colors.grey,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ],
                           ),
                         ],
@@ -425,92 +543,123 @@ class _VendorMarketListPageState extends State<VendorMarketListPage> {
                 // Tags + ราคา
                 Row(
                   children: [
-                    // Tags
                     Expanded(
                       child: Wrap(
                         spacing: 6,
+                        runSpacing: 4,
                         children: tags
                             .map((t) => Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
                                     color: const Color(0xFFFFF1A8),
-                                    borderRadius: BorderRadius.circular(999)),
-                                child: Text(t,
-                                    style: const TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600))))
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  child: Text(
+                                    t,
+                                    style: GoogleFonts.kanit(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFFB45309),
+                                    ),
+                                  ),
+                                ))
                             .toList(),
                       ),
                     ),
-
                     // ราคา
-                    Text('฿${m['pricePerDay']}/วัน',
-                        style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF8CBC63))),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF8CBC63).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '฿${m['pricePerDay']}/วัน',
+                        style: GoogleFonts.kanit(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF6E9B4C),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ],
             ),
           ),
 
-          // เหตุผลแนะนำ + ปุ่มจอง
+          // ── เหตุผลแนะนำ + ปุ่มจอง ──────────────────────
           Container(
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
             child: Row(
               children: [
-                // เหตุผลแนะนำ
+                // เหตุผล
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                      color: const Color(0xFF6E9B4C).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8)),
+                    color: const Color(0xFF6E9B4C).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: const Color(0xFF6E9B4C).withOpacity(0.2),
+                    ),
+                  ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(Icons.lightbulb_outline,
                           size: 13, color: Color(0xFF6E9B4C)),
                       const SizedBox(width: 5),
-                      Text(m['reason'] as String,
-                          style: const TextStyle(
-                              fontSize: 11,
-                              color: Color(0xFF6E9B4C),
-                              fontWeight: FontWeight.w600)),
+                      Text(
+                        m['reason'] as String,
+                        style: GoogleFonts.kanit(
+                          fontSize: 11,
+                          color: const Color(0xFF6E9B4C),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   ),
                 ),
+
                 const Spacer(),
 
-                // ปุ่มจองแผง
+                // ✅ ปุ่มจองแผง → ส่ง market data ครบ
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: available > 0
-                        ? const Color(0xFF8CBC63)
-                        : const Color(0xFFE5E7EB),
+                    backgroundColor:
+                        available > 0 ? const Color(0xFF8CBC63) : Colors.grey,
                     foregroundColor:
                         available > 0 ? Colors.white : const Color(0xFF9CA3AF),
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 10),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                   onPressed: available > 0
                       ? () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
+                            context,
+                            MaterialPageRoute(
                               builder: (_) => VendorBookingPage(
-                                    marketId: m['id'] as String,
-                                    marketName: m['name'] as String,
-                                    market: {},
-                                  )))
+                                // ✅ ส่งข้อมูลตลาดครบ
+                                market: m,
+                                marketId: m['id'] as String,
+                                marketName: m['name'] as String,
+                              ),
+                            ),
+                          )
                       : null,
-                  child: Text(available > 0 ? 'จองแผง' : 'เต็มแล้ว',
-                      style: const TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.bold)),
+                  child: Text(
+                    available > 0 ? 'จองแผง' : 'เต็มแล้ว',
+                    style: GoogleFonts.kanit(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -522,17 +671,25 @@ class _VendorMarketListPageState extends State<VendorMarketListPage> {
 
   Widget _miniStat(IconData icon, String text, Color color) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 12, color: color),
-        const SizedBox(width: 4),
-        Text(text,
-            style: TextStyle(
-                fontSize: 11, color: color, fontWeight: FontWeight.w600)),
+        const SizedBox(width: 3),
+        Text(
+          text,
+          style: GoogleFonts.kanit(
+            fontSize: 11,
+            color: color,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ],
     );
   }
 
-  // ===== Bottom Nav =====
+  // ══════════════════════════════════════════════════════
+  // Bottom Nav
+  // ══════════════════════════════════════════════════════
   Widget _buildBottomNav() {
     final items = [
       {'icon': Icons.favorite_border_rounded, 'label': 'ถูกใจ'},
@@ -541,13 +698,10 @@ class _VendorMarketListPageState extends State<VendorMarketListPage> {
       {'icon': Icons.shopping_cart_outlined, 'label': 'ร้านค้า'},
       {'icon': Icons.account_circle_rounded, 'label': 'โปรไฟล์'},
     ];
+    final double itemWidth = MediaQuery.of(context).size.width / items.length;
 
-    double screenWidth = MediaQuery.of(context).size.width;
-    double itemWidth = screenWidth / items.length;
-
-    return Container(
+    return SizedBox(
       height: 90,
-      color: Colors.transparent,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -558,34 +712,39 @@ class _VendorMarketListPageState extends State<VendorMarketListPage> {
             child: Container(
               height: 70,
               decoration: const BoxDecoration(
-                  color: Color(0xFF8CBC63),
-                  borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(25),
-                      topRight: Radius.circular(25))),
+                color: Color(0xFF8CBC63),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(25),
+                  topRight: Radius.circular(25),
+                ),
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: List.generate(items.length, (i) {
-                  bool isSelected = currentIndex == i;
+                  final isSelected = currentIndex == i;
                   return GestureDetector(
                     onTap: () => _navigateToPage(i),
-                    child: Container(
+                    child: SizedBox(
                       width: itemWidth,
-                      color: Colors.transparent,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const SizedBox(height: 10),
-                          Icon(items[i]['icon'] as IconData,
-                              color: Colors.white
-                                  .withOpacity(isSelected ? 0 : 0.8),
-                              size: 22),
+                          Icon(
+                            items[i]['icon'] as IconData,
+                            color: Colors.white
+                                .withOpacity(isSelected ? 0.0 : 0.8),
+                            size: 22,
+                          ),
                           const SizedBox(height: 4),
-                          Text(items[i]['label'] as String,
-                              style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.white
-                                      .withOpacity(isSelected ? 0 : 0.8),
-                                  fontWeight: FontWeight.w500)),
+                          Text(
+                            items[i]['label'] as String,
+                            style: GoogleFonts.kanit(
+                              fontSize: 10,
+                              color: Colors.white
+                                  .withOpacity(isSelected ? 0.0 : 0.8),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -602,27 +761,35 @@ class _VendorMarketListPageState extends State<VendorMarketListPage> {
             child: Column(
               children: [
                 Container(
-                    width: 62,
-                    height: 62,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF6E9B4C),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 3),
-                      boxShadow: [
-                        BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4)),
-                      ],
-                    ),
-                    child: Icon(items[currentIndex]['icon'] as IconData,
-                        color: Colors.white, size: 28)),
+                  width: 62,
+                  height: 62,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF6E9B4C),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    items[currentIndex]['icon'] as IconData,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(items[currentIndex]['label'] as String,
-                    style: const TextStyle(
-                        fontSize: 10,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold)),
+                Text(
+                  items[currentIndex]['label'] as String,
+                  style: GoogleFonts.kanit(
+                    fontSize: 10,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ],
             ),
           ),
@@ -632,19 +799,29 @@ class _VendorMarketListPageState extends State<VendorMarketListPage> {
   }
 }
 
+// ── Wave Painter ──────────────────────────────────────────
 class _TopWavePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = const Color(0xFF73A34F)
       ..style = PaintingStyle.fill;
+
     final path = Path();
     path.moveTo(0, 0);
     path.lineTo(0, size.height * 0.78);
-    path.quadraticBezierTo(size.width * 0.18, size.height * 0.98,
-        size.width * 0.52, size.height * 0.56);
     path.quadraticBezierTo(
-        size.width * 0.72, size.height * 1.02, size.width, size.height * 0.72);
+      size.width * 0.18,
+      size.height * 0.98,
+      size.width * 0.52,
+      size.height * 0.56,
+    );
+    path.quadraticBezierTo(
+      size.width * 0.72,
+      size.height * 1.02,
+      size.width,
+      size.height * 0.72,
+    );
     path.lineTo(size.width, 0);
     path.close();
     canvas.drawPath(path, paint);

@@ -45,7 +45,7 @@ class _GuestProfilePageState extends State<GuestProfilePage> {
       _userEmail = prefs.getString('email') ?? 'seeeeeeee@gmail.co'; // ✅
       final imagePath = prefs.getString('profileImage');
       if (imagePath != null) _profileImage = File(imagePath);
-    });ฑ
+    });
     _nameCtrl.text = _userName;
   }
 

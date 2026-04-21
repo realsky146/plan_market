@@ -1,12 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../auth/select_role_page.dart';
 import 'vendor_home.dart';
 import 'vendor_market_list_page.dart';
-import 'favorite_vendor_page.dart'; // ✅ ชื่อไฟล์ตรงกับใน Explorer
+import 'favorite_vendor_page.dart';
+import 'vendor_shop_info_page.dart';
+import 'vendor_edit_profile_page.dart';
 
+// ══════════════════════════════════════════════════════════
+// 🔌 API Service
+// ══════════════════════════════════════════════════════════
+class VendorProfileApiService {
+  static const String baseUrl = 'https://api.planmarket.com/v1';
+
+  // 🔌 TODO: GET $baseUrl/vendor/profile
+  static Future<Map<String, dynamic>> getProfile() async {
+    await Future.delayed(const Duration(milliseconds: 400));
+    return {
+      'success': true,
+      'data': {
+        'name': 'นางสาวมาลี ขายดี',
+        'email': 'vendor@test.com',
+        'phone': '082-345-6789',
+        'image':
+            'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200',
+        'memberSince': 'กุมภาพันธ์ 2567',
+        'shopName': 'ร้านมาลีผัดไทย',
+        'shopCategory': 'อาหาร',
+      },
+    };
+  }
+
+  // 🔌 TODO: PUT $baseUrl/vendor/profile
+  static Future<bool> updateProfile(Map<String, dynamic> data) async {
+    await Future.delayed(const Duration(milliseconds: 600));
+    return true;
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// VendorProfilePage
+// ══════════════════════════════════════════════════════════
 class VendorProfilePage extends StatefulWidget {
   const VendorProfilePage({super.key});
 
@@ -16,59 +51,112 @@ class VendorProfilePage extends StatefulWidget {
 
 class _VendorProfilePageState extends State<VendorProfilePage> {
   int currentIndex = 4;
+  bool _isLoading = true;
+  bool _isEditing = false;
+  bool _isSaving = false;
+  Map<String, dynamic> _profile = {};
 
-  final Map<String, dynamic> _vendor = {
-    'name': 'นางสาวมาลี ขายดี',
-    'email': 'vendor@test.com',
-    'phone': '082-345-6789',
-    'shopName': 'ร้านมาลีผัดไทย',
-    'shopCategory': 'อาหาร',
-    'reliabilityScore': 87,
-    'totalBookings': 24,
-    'checkinRate': 92,
-    'memberSince': 'กุมภาพันธ์ 2567',
-  };
+  // Controllers สำหรับแก้ไข
+  final _nameCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
 
-  final List<Map<String, dynamic>> _bookings = [
-    {
-      'id': 'b001',
-      'marketName': 'ตลาดนัดจตุจักร',
-      'stallNo': 'A-12',
-      'date': '15 ม.ค. 2568',
-      'status': 'pending',
-      'price': 300,
-    },
-    {
-      'id': 'b002',
-      'marketName': 'ตลาดนัดรถไฟ',
-      'stallNo': 'B-05',
-      'date': '18 ม.ค. 2568',
-      'status': 'approved',
-      'price': 250,
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
 
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _phoneCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadProfile() async {
+    setState(() => _isLoading = true);
+    try {
+      final result = await VendorProfileApiService.getProfile();
+      if (mounted && result['success'] == true) {
+        final data = result['data'] as Map<String, dynamic>;
+        setState(() {
+          _profile = data;
+          _nameCtrl.text = data['name'] ?? '';
+          _phoneCtrl.text = data['phone'] ?? '';
+        });
+      }
+    } catch (e) {
+      _showSnackbar('โหลดข้อมูลไม่สำเร็จ', isError: true);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _saveProfile() async {
+    if (_nameCtrl.text.trim().isEmpty) {
+      _showSnackbar('กรุณากรอกชื่อบัญชี', isError: true);
+      return;
+    }
+    setState(() => _isSaving = true);
+    try {
+      final ok = await VendorProfileApiService.updateProfile({
+        'name': _nameCtrl.text.trim(),
+        'phone': _phoneCtrl.text.trim(),
+      });
+      if (!mounted) return;
+      if (ok) {
+        setState(() {
+          _profile['name'] = _nameCtrl.text.trim();
+          _profile['phone'] = _phoneCtrl.text.trim();
+          _isEditing = false;
+        });
+        _showSnackbar('บันทึกข้อมูลสำเร็จ ✅');
+      } else {
+        _showSnackbar('บันทึกไม่สำเร็จ', isError: true);
+      }
+    } catch (_) {
+      _showSnackbar('เกิดข้อผิดพลาด', isError: true);
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  void _cancelEdit() {
+    setState(() {
+      _nameCtrl.text = _profile['name'] ?? '';
+      _phoneCtrl.text = _profile['phone'] ?? '';
+      _isEditing = false;
+    });
+  }
+
+  void _showSnackbar(String msg, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg, style: GoogleFonts.kanit()),
+        backgroundColor: isError ? Colors.redAccent : const Color(0xFF8CBC63),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════
+  // Logout
+  // ══════════════════════════════════════════════════════
   Future<void> _logout() async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('ออกจากระบบ', style: GoogleFonts.kanit()),
-        content: Text(
-          'ต้องการออกจากระบบใช่ไหม?',
-          style: GoogleFonts.kanit(),
-        ),
+        content: Text('ต้องการออกจากระบบใช่ไหม?', style: GoogleFonts.kanit()),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: Text('ยกเลิก', style: GoogleFonts.kanit()),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(
               'ออกจากระบบ',
@@ -78,7 +166,6 @@ class _VendorProfilePageState extends State<VendorProfilePage> {
         ],
       ),
     );
-
     if (confirm == true && mounted) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
@@ -92,24 +179,25 @@ class _VendorProfilePageState extends State<VendorProfilePage> {
     }
   }
 
+  // ══════════════════════════════════════════════════════
+  // Navigation
+  // ══════════════════════════════════════════════════════
   void _navigateToPage(int index) {
     if (index == currentIndex) return;
     setState(() => currentIndex = index);
-
     Future.delayed(const Duration(milliseconds: 300), () {
       if (!mounted) return;
       switch (index) {
         case 0:
           Navigator.pushReplacement(
             context,
-            // ✅ ชื่อ class ตรงกับ favorite_vendor_page.dart
             MaterialPageRoute(builder: (_) => const VendorFavoritePage()),
           );
           break;
         case 1:
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => VendorMarketListPage()),
+            MaterialPageRoute(builder: (_) => const VendorMarketListPage()),
           );
           break;
         case 2:
@@ -119,6 +207,10 @@ class _VendorProfilePageState extends State<VendorProfilePage> {
           );
           break;
         case 3:
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const VendorShopInfoPage()),
+          );
           break;
         case 4:
           break;
@@ -126,8 +218,20 @@ class _VendorProfilePageState extends State<VendorProfilePage> {
     });
   }
 
+  // ══════════════════════════════════════════════════════
+  // Build
+  // ══════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFEEEEEE),
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFF8CBC63)),
+        ),
+      );
+    }
+
     return Theme(
       data: Theme.of(context).copyWith(
         textTheme: GoogleFonts.kanitTextTheme(Theme.of(context).textTheme),
@@ -137,28 +241,32 @@ class _VendorProfilePageState extends State<VendorProfilePage> {
         body: SafeArea(
           child: Stack(
             children: [
+              // Wave background
               SizedBox(
-                height: 140,
+                height: 160,
                 width: double.infinity,
                 child: CustomPaint(painter: _TopWavePainter()),
               ),
               Column(
                 children: [
                   Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          _buildHeader(),
-                          const SizedBox(height: 16),
-                          _buildStatsRow(),
-                          const SizedBox(height: 16),
-                          _buildReliabilityScore(),
-                          const SizedBox(height: 16),
-                          _buildBookingSection(),
-                          const SizedBox(height: 16),
-                          _buildMenuSection(),
-                          const SizedBox(height: 100),
-                        ],
+                    child: RefreshIndicator(
+                      color: const Color(0xFF8CBC63),
+                      onRefresh: _loadProfile,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Column(
+                          children: [
+                            _buildProfileHeader(),
+                            const SizedBox(height: 24),
+                            _buildInfoSection(),
+                            const SizedBox(height: 20),
+                            _buildShopInfoButton(),
+                            const SizedBox(height: 20),
+                            _buildLogoutButton(),
+                            const SizedBox(height: 100),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -177,72 +285,111 @@ class _VendorProfilePageState extends State<VendorProfilePage> {
     );
   }
 
-  Widget _buildHeader() {
+  // ── Profile Header ────────────────────────────────────
+  Widget _buildProfileHeader() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      padding: const EdgeInsets.only(top: 40, bottom: 16),
       child: Column(
         children: [
-          const SizedBox(height: 8),
-          CircleAvatar(
-            radius: 40,
-            backgroundColor: Colors.white.withOpacity(0.3),
+          Stack(
+            children: [
+              Container(
+                width: 96,
+                height: 96,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.grey,
+                  border: Border.all(color: Colors.white, width: 3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ClipOval(
+                  child: _profile['image'] != null
+                      ? Image.network(
+                          _profile['image'],
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: Colors.grey,
+                            child: const Icon(
+                              Icons.person_rounded,
+                              size: 50,
+                              color: Colors.white,
+                            ),
+                          ),
+                        )
+                      : Container(
+                          color: Colors.grey,
+                          child: const Icon(
+                            Icons.person_rounded,
+                            size: 50,
+                            color: Colors.white,
+                          ),
+                        ),
+                ),
+              ),
+              // Camera button
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF8CBC63),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  child: const Icon(
+                    Icons.camera_alt_rounded,
+                    size: 14,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
             child: Text(
-              _vendor['shopName'].toString().substring(0, 1),
+              'profile',
               style: GoogleFonts.kanit(
-                fontSize: 32,
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: const Color(0xFF374151),
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          Text(
-            _vendor['shopName'],
-            style: GoogleFonts.kanit(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          Text(
-            _vendor['shopCategory'],
-            style: GoogleFonts.kanit(fontSize: 14, color: Colors.white70),
-          ),
-          Text(
-            _vendor['email'],
-            style: GoogleFonts.kanit(fontSize: 13, color: Colors.white60),
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildStatsRow() {
+  // ── Info Section ──────────────────────────────────────
+  Widget _buildInfoSection() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          _buildStatCard('การจองทั้งหมด', '${_vendor['totalBookings']}',
-              Icons.book_online),
-          const SizedBox(width: 12),
-          _buildStatCard(
-              'เช็กอิน %', '${_vendor['checkinRate']}%', Icons.check_circle),
-          const SizedBox(width: 12),
-          _buildStatCard(
-              'สมาชิกตั้งแต่', _vendor['memberSince'], Icons.calendar_today),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatCard(String label, String value, IconData icon) {
-    return Expanded(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Container(
-        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
@@ -253,224 +400,325 @@ class _VendorProfilePageState extends State<VendorProfilePage> {
         ),
         child: Column(
           children: [
-            Icon(icon, color: const Color(0xFF8CBC63), size: 22),
-            const SizedBox(height: 6),
-            Text(
-              value,
-              style:
-                  GoogleFonts.kanit(fontSize: 15, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            Text(
-              label,
-              style: GoogleFonts.kanit(fontSize: 10, color: Colors.grey),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildReliabilityScore() {
-    final score = _vendor['reliabilityScore'] as int;
-    final color = score >= 80
-        ? Colors.green
-        : score >= 60
-            ? Colors.orange
-            : Colors.red;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '⭐ Reliability Score',
-              style:
-                  GoogleFonts.kanit(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Text(
-                  '$score',
-                  style: GoogleFonts.kanit(
-                    fontSize: 40,
-                    fontWeight: FontWeight.bold,
-                    color: color,
+            // ── Header row ─────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 8, 0),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.person_outline_rounded,
+                    color: Color(0xFF8CBC63),
+                    size: 18,
                   ),
-                ),
-                Text('/100',
-                    style: GoogleFonts.kanit(fontSize: 18, color: Colors.grey)),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: LinearProgressIndicator(
-                      value: score / 100,
-                      minHeight: 12,
-                      backgroundColor: Colors.grey,
-                      valueColor: AlwaysStoppedAnimation<Color>(color),
+                  const SizedBox(width: 6),
+                  Text(
+                    'ข้อมูลส่วนตัว',
+                    style: GoogleFonts.kanit(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF374151),
                     ),
                   ),
+                  const Spacer(),
+                  // ปุ่มแก้ไข / ยกเลิก
+                  if (!_isEditing)
+                    TextButton.icon(
+                      onPressed: () => setState(() => _isEditing = true),
+                      icon: const Icon(
+                        Icons.edit_rounded,
+                        size: 14,
+                        color: Color(0xFF8CBC63),
+                      ),
+                      label: Text(
+                        'แก้ไข',
+                        style: GoogleFonts.kanit(
+                          fontSize: 12,
+                          color: const Color(0xFF8CBC63),
+                        ),
+                      ),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                      ),
+                    )
+                  else
+                    TextButton(
+                      onPressed: _cancelEdit,
+                      child: Text(
+                        'ยกเลิก',
+                        style: GoogleFonts.kanit(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const Divider(height: 16, indent: 16, endIndent: 16),
+
+            // ── ชื่อบัญชี ────────────────────────────
+            _buildInfoRow(
+              label: 'ชื่อบัญชี',
+              value: _profile['name'] ?? '-',
+              controller: _nameCtrl,
+              isEditable: true,
+              hint: 'กรุณากรอกชื่อ-นามสกุล',
+            ),
+
+            // ── เบอร์โทรศัพท์ ─────────────────────────
+            _buildInfoRow(
+              label: 'เบอร์โทรศัพท์',
+              value: _profile['phone'] ?? '-',
+              controller: _phoneCtrl,
+              isEditable: true,
+              hint: 'กรุณากรอกเบอร์โทรศัพท์',
+              keyboardType: TextInputType.phone,
+            ),
+
+            // ── E-mail (แก้ไขไม่ได้) ──────────────────
+            _buildInfoRow(
+              label: 'E-mail',
+              value: _profile['email'] ?? '-',
+              controller: null,
+              isEditable: false,
+              hint: '',
+              note: 'อีเมลไม่สามารถเปลี่ยนแปลงได้',
+              isLast: true,
+            ),
+
+            // ── ปุ่มบันทึก (เมื่ออยู่ใน editing mode) ──
+            if (_isEditing)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF8CBC63),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    onPressed: _isSaving ? null : _saveProfile,
+                    child: _isSaving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(
+                            'บันทึกข้อมูล',
+                            style: GoogleFonts.kanit(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                  ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              score >= 80
-                  ? '🏆 ร้านค้าที่เชื่อถือได้'
-                  : '👍 ร้านค้าดี ยังพัฒนาได้',
-              style: GoogleFonts.kanit(fontSize: 13, color: Colors.grey),
-            ),
+              ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildBookingSection() {
+  Widget _buildInfoRow({
+    required String label,
+    required String value,
+    required TextEditingController? controller,
+    required bool isEditable,
+    required String hint,
+    TextInputType keyboardType = TextInputType.text,
+    String? note,
+    bool isLast = false,
+  }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.fromLTRB(16, 0, 16, isLast ? 16 : 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(height: 10),
           Text(
-            '📋 สถานะการจองล่าสุด',
-            style: GoogleFonts.kanit(fontSize: 16, fontWeight: FontWeight.bold),
+            label,
+            style: GoogleFonts.kanit(
+              fontSize: 11,
+              color: Colors.grey,
+            ),
           ),
-          const SizedBox(height: 8),
-          ..._bookings.map((b) => _buildBookingCard(b)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBookingCard(Map<String, dynamic> booking) {
-    final isPending = booking['status'] == 'pending';
-    final color = isPending ? Colors.orange : Colors.green;
-    final text = isPending ? '⏳ รออนุมัติ' : '✅ อนุมัติแล้ว';
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(booking['marketName'],
-                    style: GoogleFonts.kanit(fontWeight: FontWeight.bold)),
-                Text(
-                  'ล็อก ${booking['stallNo']} | ${booking['date']}',
-                  style: GoogleFonts.kanit(fontSize: 13, color: Colors.grey),
+          const SizedBox(height: 4),
+          // แสดง TextField เมื่อแก้ไข และ field นั้น editable
+          if (_isEditing && isEditable && controller != null)
+            TextField(
+              controller: controller,
+              keyboardType: keyboardType,
+              style: GoogleFonts.kanit(
+                fontSize: 14,
+                color: const Color(0xFF1F2937),
+              ),
+              decoration: InputDecoration(
+                hintText: hint,
+                hintStyle: GoogleFonts.kanit(color: Colors.grey, fontSize: 13),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
                 ),
-                Text(
-                  '฿${booking['price']}',
-                  style: GoogleFonts.kanit(
-                    fontSize: 13,
-                    color: const Color(0xFF8CBC63),
-                    fontWeight: FontWeight.w600,
+                isDense: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: const Color(0xFF8CBC63).withOpacity(0.5),
                   ),
                 ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF8CBC63),
+                    width: 1.5,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: Colors.grey.shade300,
+                  ),
+                ),
+                filled: true,
+                fillColor: const Color(0xFFF9FFF5),
+              ),
+            )
+          else
+            // แสดงข้อความปกติ
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    value,
+                    style: GoogleFonts.kanit(
+                      fontSize: 14,
+                      color: isEditable ? const Color(0xFF1F2937) : Colors.grey,
+                    ),
+                  ),
+                ),
+                if (!isEditable)
+                  Icon(
+                    Icons.lock_outline_rounded,
+                    size: 14,
+                    color: Colors.grey,
+                  ),
               ],
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
+          if (note != null && (!_isEditing || !isEditable))
+            Padding(
+              padding: const EdgeInsets.only(top: 3),
+              child: Text(
+                note,
+                style: GoogleFonts.kanit(
+                  fontSize: 10,
+                  color: Colors.grey,
+                ),
+              ),
             ),
-            child: Text(
-              text,
-              style: GoogleFonts.kanit(
-                  fontSize: 12, color: color, fontWeight: FontWeight.w600),
+          if (!isLast)
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Divider(height: 1, color: Colors.grey.shade100),
             ),
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildMenuSection() {
+  // ── ปุ่มข้อมูลร้านค้า → VendorEditProfilePage ────────
+  Widget _buildShopInfoButton() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        children: [
-          _buildMenuItem(
-            icon: Icons.store,
-            label: 'ค้นหาตลาด',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => VendorMarketListPage()),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: GestureDetector(
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const VendorEditProfilePage(),
+          ),
+        ).then((_) => _loadProfile()),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              'ข้อมูลร้านค้า',
+              style: GoogleFonts.kanit(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF374151),
+              ),
             ),
           ),
-          _buildMenuItem(
-              icon: Icons.history, label: 'ประวัติการจอง', onTap: () {}),
-          _buildMenuItem(
-              icon: Icons.edit, label: 'แก้ไขโปรไฟล์ร้านค้า', onTap: () {}),
-          _buildMenuItem(
-            icon: Icons.logout,
-            label: 'ออกจากระบบ',
-            color: Colors.redAccent,
-            onTap: _logout,
+        ),
+      ),
+    );
+  }
+
+  // ── Logout Button ─────────────────────────────────────
+  Widget _buildLogoutButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: GestureDetector(
+        onTap: _logout,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-        ],
+          child: Center(
+            child: Text(
+              'ออกจากระบบ',
+              style: GoogleFonts.kanit(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildMenuItem({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    Color? color,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: ListTile(
-        leading: Icon(icon, color: color ?? const Color(0xFF8CBC63)),
-        title: Text(label,
-            style: GoogleFonts.kanit(color: color ?? Colors.black87)),
-        trailing: Icon(Icons.chevron_right, color: Colors.grey),
-        onTap: onTap,
-      ),
-    );
-  }
-
+  // ── Bottom Nav ────────────────────────────────────────
   Widget _buildBottomNav() {
     final items = [
       {'icon': Icons.favorite_border_rounded, 'label': 'ถูกใจ'},
       {'icon': Icons.storefront_rounded, 'label': 'ตลาด'},
       {'icon': Icons.home_rounded, 'label': 'หน้าแรก'},
-      {'icon': Icons.shopping_cart_outlined, 'label': 'ร้านค้า'},
+      {'icon': Icons.shopping_bag_rounded, 'label': 'ร้านค้า'},
       {'icon': Icons.account_circle_rounded, 'label': 'โปรไฟล์'},
     ];
 
@@ -508,8 +756,9 @@ class _VendorProfilePageState extends State<VendorProfilePage> {
                           const SizedBox(height: 10),
                           Icon(
                             items[i]['icon'] as IconData,
-                            color: Colors.white
-                                .withOpacity(isSelected ? 0.0 : 0.8),
+                            color: Colors.white.withOpacity(
+                              isSelected ? 0.0 : 0.8,
+                            ),
                             size: 22,
                           ),
                           const SizedBox(height: 4),
@@ -517,8 +766,9 @@ class _VendorProfilePageState extends State<VendorProfilePage> {
                             items[i]['label'] as String,
                             style: GoogleFonts.kanit(
                               fontSize: 10,
-                              color: Colors.white
-                                  .withOpacity(isSelected ? 0.0 : 0.8),
+                              color: Colors.white.withOpacity(
+                                isSelected ? 0.0 : 0.8,
+                              ),
                             ),
                           ),
                         ],
@@ -543,6 +793,13 @@ class _VendorProfilePageState extends State<VendorProfilePage> {
                     color: const Color(0xFF6E9B4C),
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
                   child: Icon(
                     items[currentIndex]['icon'] as IconData,
@@ -568,6 +825,9 @@ class _VendorProfilePageState extends State<VendorProfilePage> {
   }
 }
 
+// ══════════════════════════════════════════════════════════
+// Wave Painter
+// ══════════════════════════════════════════════════════════
 class _TopWavePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {

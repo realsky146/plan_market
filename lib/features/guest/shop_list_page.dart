@@ -1273,7 +1273,7 @@ class _ShopListPageState extends State<ShopListPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          '🛍️ ร้านค้าทั้งหมด',
+                          'ร้านค้าทั้งหมด',
                           style: GoogleFonts.kanit(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,

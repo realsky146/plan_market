@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart'; // ✅ เพิ่ม
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'features/guest/home_page.dart';
 import 'features/guest/profile_page.dart';
 import 'features/vendor/vendor_home.dart';
@@ -25,7 +25,23 @@ class PlanMarketApp extends StatelessWidget {
       theme: ThemeData(
         textTheme: GoogleFonts.kanitTextTheme(),
         useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF8CBC63),
+        ),
       ),
+
+      // ✅ เพิ่มตรงนี้
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('th', 'TH'),
+        Locale('en', 'US'),
+      ],
+      locale: const Locale('th', 'TH'),
+
       home: const SplashRouter(),
     );
   }
@@ -47,7 +63,6 @@ class _SplashRouterState extends State<SplashRouter> {
 
   Future<void> _checkSession() async {
     await Future.delayed(const Duration(milliseconds: 1500));
-
     final prefs = await SharedPreferences.getInstance();
     final role = prefs.getString('role');
     final status = prefs.getString('status') ?? 'active';
@@ -63,7 +78,6 @@ class _SplashRouterState extends State<SplashRouter> {
       case 'super_admin':
         _go(const AdminHome());
         break;
-
       case 'market_owner':
         if (status == 'approved') {
           _go(const MarketOwnerHome());
@@ -75,16 +89,12 @@ class _SplashRouterState extends State<SplashRouter> {
           _go(const HomePage());
         }
         break;
-
       case 'vendor':
         _go(const VendorHome());
         break;
-
       case 'customer':
-        // ✅ แก้: ไปหน้า Home แทน Profile
         _go(const HomePage());
         break;
-
       default:
         _go(const HomePage());
     }
@@ -97,7 +107,6 @@ class _SplashRouterState extends State<SplashRouter> {
     );
   }
 
-  // ✅ เพิ่ม: Splash Screen UI (แทนจอขาว)
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -106,13 +115,20 @@ class _SplashRouterState extends State<SplashRouter> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // โลโก้หรือไอคอน
-            const Icon(
-              Icons.storefront_rounded,
-              size: 80,
-              color: Colors.white,
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.storefront_rounded,
+                size: 60,
+                color: Colors.white,
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Text(
               'Plan Market',
               style: GoogleFonts.kanit(
@@ -121,7 +137,15 @@ class _SplashRouterState extends State<SplashRouter> {
                 color: Colors.white,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 8),
+            Text(
+              'ตลาดนัดออนไลน์',
+              style: GoogleFonts.kanit(
+                fontSize: 14,
+                color: Colors.white.withOpacity(0.8),
+              ),
+            ),
+            const SizedBox(height: 32),
             const CircularProgressIndicator(
               color: Colors.white,
               strokeWidth: 2,

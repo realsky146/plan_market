@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:plan_market/features/vendor/vendor_shop_info_page.dart';
 import '../vendor/favorite_vendor_page.dart';
 import 'vendor_home.dart';
 import 'vendor_market_list_page.dart';
@@ -59,6 +60,8 @@ class _VendorFavoritePageState extends State<VendorFavoritePage> {
           );
           break;
         case 3:
+          Navigator.pushReplacement(context,
+              MaterialPageRoute(builder: (_) => const VendorShopInfoPage()));
           break;
         case 4:
           Navigator.pushReplacement(
@@ -104,7 +107,7 @@ class _VendorFavoritePageState extends State<VendorFavoritePage> {
                           onPressed: () => Navigator.pop(context),
                         ),
                         Text(
-                          '❤️ ตลาดที่ถูกใจ',
+                          'ตลาดที่ถูกใจ',
                           style: GoogleFonts.kanit(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
