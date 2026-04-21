@@ -173,7 +173,6 @@ class _QRCheckinDialog extends StatelessWidget {
     final qrData = 'PLANMARKET-${booking['id']}-${booking['marketId']}';
     final bookingNumber =
         booking['id'].toString().replaceAll('bk', '').padLeft(6, '0');
-    // ✅ คำนวณขนาด QR ตามจอ
     final screenWidth = MediaQuery.of(context).size.width;
     final qrSize = (screenWidth - 40 - 32 - 24).clamp(160.0, 220.0);
 
@@ -223,7 +222,6 @@ class _QRCheckinDialog extends StatelessWidget {
                 ],
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -242,7 +240,6 @@ class _QRCheckinDialog extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        // ข้อมูลตลาด
                         Padding(
                           padding: const EdgeInsets.all(14),
                           child: Row(
@@ -287,7 +284,6 @@ class _QRCheckinDialog extends StatelessWidget {
                                           fontSize: 11, color: Colors.grey),
                                     ),
                                     const SizedBox(height: 3),
-                                    // ✅ ใช้ Wrap แทน Row ป้องกัน overflow
                                     Wrap(
                                       children: [
                                         Text(
@@ -311,10 +307,7 @@ class _QRCheckinDialog extends StatelessWidget {
                             ],
                           ),
                         ),
-
                         const Divider(height: 1),
-
-                        // QR Code
                         Padding(
                           padding: const EdgeInsets.all(20),
                           child: Column(
@@ -337,7 +330,6 @@ class _QRCheckinDialog extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 14),
-                              // ✅ FittedBox ป้องกัน overflow ข้อความ
                               FittedBox(
                                 fit: BoxFit.scaleDown,
                                 child: Text(
@@ -361,10 +353,7 @@ class _QRCheckinDialog extends StatelessWidget {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 12),
-
-                  // คำแนะนำ
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
@@ -393,9 +382,7 @@ class _QRCheckinDialog extends StatelessWidget {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 12),
-
                   SizedBox(
                     width: double.infinity,
                     height: 44,
@@ -426,6 +413,7 @@ class _QRCheckinDialog extends StatelessWidget {
 // ══════════════════════════════════════════════════════════
 class VendorHome extends StatefulWidget {
   const VendorHome({super.key});
+
   @override
   State<VendorHome> createState() => _VendorHomeState();
 }
@@ -772,7 +760,6 @@ class _VendorHomeState extends State<VendorHome> {
         statusText = 'รออนุมัติ';
         statusIcon = Icons.hourglass_top_rounded;
     }
-
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
@@ -941,7 +928,6 @@ class _VendorHomeState extends State<VendorHome> {
                                           ),
                                         ),
                                         const SizedBox(width: 8),
-                                        // ✅ FittedBox กัน overflow ราคา
                                         FittedBox(
                                           fit: BoxFit.scaleDown,
                                           child: Text(
@@ -1205,7 +1191,7 @@ class _VendorHomeState extends State<VendorHome> {
                       children: [
                         Expanded(
                           child: Text(
-                            '📋 สรุปการดำเนินการ',
+                            'สรุปการดำเนินการ',
                             style: GoogleFonts.kanit(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
@@ -1258,40 +1244,42 @@ class _VendorHomeState extends State<VendorHome> {
                     ),
                   ),
                   const SizedBox(height: 10),
-
-                  // ✅ Summary Cards — แต่ละ card ใช้ Expanded ใน Row
+                  // ✅ Summary Cards
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: IntrinsicHeight(
-                      child: Row(
-                        children: [
-                          _summaryCard(
-                              'รออนุมัติ',
-                              _pendingCount,
-                              const Color(0xFFFFB000),
-                              Icons.hourglass_top_rounded,
-                              'pending'),
-                          const SizedBox(width: 8),
-                          _summaryCard(
-                              'อนุมัติแล้ว',
-                              _approvedCount,
-                              const Color(0xFF22C55E),
-                              Icons.check_circle_rounded,
-                              'approved'),
-                          const SizedBox(width: 8),
-                          _summaryCard(
-                              'ปฏิเสธ',
-                              _rejectedCount,
-                              const Color(0xFFEF4444),
-                              Icons.cancel_rounded,
-                              'rejected'),
-                        ],
-                      ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _summaryCard(
+                            'รออนุมัติ',
+                            _pendingCount,
+                            const Color(0xFFFFB000),
+                            'pending',
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _summaryCard(
+                            'อนุมัติแล้ว',
+                            _approvedCount,
+                            const Color(0xFF22C55E),
+                            'approved',
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _summaryCard(
+                            'ปฏิเสธ',
+                            _rejectedCount,
+                            const Color(0xFFEF4444),
+                            'rejected',
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 10),
-
-                  // ✅ Filter Tabs — ใช้ SingleChildScrollView แนวนอน
+                  // ✅ Filter Tabs
                   SizedBox(
                     height: 34,
                     child: ListView(
@@ -1312,7 +1300,6 @@ class _VendorHomeState extends State<VendorHome> {
                     ),
                   ),
                   const SizedBox(height: 10),
-
                   // Booking List
                   Expanded(
                     child: _isLoading
@@ -1362,72 +1349,65 @@ class _VendorHomeState extends State<VendorHome> {
     );
   }
 
-  Widget _summaryCard(
-      String label, int count, Color color, IconData icon, String status) {
+  // ✅ แก้ไข _summaryCard — ลบ IconData ออก และลบ Expanded ซ้อนออก
+  Widget _summaryCard(String label, int count, Color color, String status) {
     final isSelected = _selectedStatus == status;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () =>
-            setState(() => _selectedStatus = isSelected ? 'all' : status),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: isSelected ? color : Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: isSelected ? color : Colors.transparent,
-              width: 2,
+    return GestureDetector(
+      onTap: () =>
+          setState(() => _selectedStatus = isSelected ? 'all' : status),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? color : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected ? color : Colors.transparent,
+            width: 2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: isSelected ? Colors.white : color, size: 20),
-              const SizedBox(height: 4),
-              // ✅ FittedBox กันตัวเลขล้น
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  '$count',
-                  style: GoogleFonts.kanit(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: isSelected ? Colors.white : color,
-                  ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                '$count',
+                style: GoogleFonts.kanit(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: isSelected ? Colors.white : color,
                 ),
               ),
-              // ✅ ข้อความ label ขึ้นบรรทัดได้
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Text(
-                  label,
-                  style: GoogleFonts.kanit(
-                    fontSize: 10,
-                    color: isSelected
-                        ? Colors.white.withOpacity(0.9)
-                        : const Color(0xFF6B7280),
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Text(
+                label,
+                style: GoogleFonts.kanit(
+                  fontSize: 10,
+                  color: isSelected
+                      ? Colors.white.withOpacity(0.9)
+                      : const Color(0xFF6B7280),
                 ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  // ✅ filter tab ขนาดยืดหยุ่น ไม่ fixed width
   Widget _filterTab(String label, String status, Color color) {
     final isSelected = _selectedStatus == status;
     return GestureDetector(
@@ -1469,7 +1449,6 @@ class _VendorHomeState extends State<VendorHome> {
         statusColor = const Color(0xFFFFB000);
         statusText = 'รออนุมัติ';
     }
-
     return GestureDetector(
       onTap: () => _showBookingDetail(booking),
       child: Container(
@@ -1490,7 +1469,6 @@ class _VendorHomeState extends State<VendorHome> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // รูปภาพ
                 ClipRRect(
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(12),
@@ -1510,7 +1488,6 @@ class _VendorHomeState extends State<VendorHome> {
                     ),
                   ),
                 ),
-                // ข้อมูล
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
@@ -1533,7 +1510,6 @@ class _VendorHomeState extends State<VendorHome> {
                               ),
                             ),
                             const SizedBox(width: 6),
-                            // ✅ status badge ไม่ shrink
                             Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 6, vertical: 2),
@@ -1586,7 +1562,6 @@ class _VendorHomeState extends State<VendorHome> {
                         const SizedBox(height: 6),
                         Row(
                           children: [
-                            // ✅ Flexible ป้องกัน overflow ราคา
                             Flexible(
                               child: FittedBox(
                                 fit: BoxFit.scaleDown,
@@ -1623,8 +1598,6 @@ class _VendorHomeState extends State<VendorHome> {
                 ),
               ],
             ),
-
-            // ✅ แถบ QR Check-in
             if (status == 'approved')
               GestureDetector(
                 onTap: () => _showQRCheckin(booking),
@@ -1679,11 +1652,10 @@ class _VendorHomeState extends State<VendorHome> {
       {'icon': Icons.favorite_border_rounded, 'label': 'ถูกใจ'},
       {'icon': Icons.storefront_rounded, 'label': 'ตลาด'},
       {'icon': Icons.home_rounded, 'label': 'หน้าแรก'},
-      {'icon': Icons.shopping_bag_rounded, 'label': 'ร้านค้า'},
+      {'icon': Icons.shopping_cart_outlined, 'label': 'ร้านค้า'},
       {'icon': Icons.account_circle_rounded, 'label': 'โปรไฟล์'},
     ];
     final double itemWidth = MediaQuery.of(context).size.width / items.length;
-
     return SizedBox(
       height: 90,
       child: Stack(

@@ -718,7 +718,7 @@ class _VendorProfilePageState extends State<VendorProfilePage> {
       {'icon': Icons.favorite_border_rounded, 'label': 'ถูกใจ'},
       {'icon': Icons.storefront_rounded, 'label': 'ตลาด'},
       {'icon': Icons.home_rounded, 'label': 'หน้าแรก'},
-      {'icon': Icons.shopping_bag_rounded, 'label': 'ร้านค้า'},
+      {'icon': Icons.shopping_cart_outlined, 'label': 'ร้านค้า'},
       {'icon': Icons.account_circle_rounded, 'label': 'โปรไฟล์'},
     ];
 

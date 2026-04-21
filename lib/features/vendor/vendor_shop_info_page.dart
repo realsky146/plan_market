@@ -510,38 +510,8 @@ class _VendorShopInfoPageState extends State<VendorShopInfoPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ── ชื่อ ──────────────────────────
-                      if (_profileName.isNotEmpty)
-                        Center(
-                          child: Text(
-                            _profileName,
-                            style: GoogleFonts.kanit(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF1F2937),
-                            ),
-                          ),
-                        ),
-                      const SizedBox(height: 20),
-
-                      // ── จัดการบัญชี ──────────────────
-                      _sectionHeader('⚙️ จัดการบัญชี'),
-                      const SizedBox(height: 10),
-                      _menuCard(
-                        icon: Icons.edit_rounded,
-                        label: 'แก้ไขข้อมูลส่วนตัว',
-                        subtitle: 'ชื่อ เบอร์โทร LINE Facebook',
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const VendorEditProfilePage(),
-                          ),
-                        ).then((_) => _loadData()),
-                      ),
-                      const SizedBox(height: 24),
-
                       // ── ประวัติการจอง ─────────────────
-                      _sectionHeader('📋 ประวัติการจอง'),
+                      _sectionHeader('ประวัติการจอง'),
                       const SizedBox(height: 10),
                       if (_bookingHistory.isEmpty)
                         Container(
@@ -634,13 +604,13 @@ class _VendorShopInfoPageState extends State<VendorShopInfoPage> {
 
     if (status == 'completed') {
       statusColor = Colors.grey;
-      statusText = '✓ เสร็จสิ้น';
+      statusText = 'เสร็จสิ้น';
     } else if (checkedIn) {
       statusColor = const Color(0xFF22C55E);
-      statusText = '✅ เช็คอินแล้ว';
+      statusText = 'เช็คอินแล้ว';
     } else {
       statusColor = const Color(0xFF8CBC63);
-      statusText = '🏪 อนุมัติแล้ว';
+      statusText = 'อนุมัติแล้ว';
     }
 
     return GestureDetector(
