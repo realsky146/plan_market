@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:plan_market/features/auth/select_role_page.dart';
+import 'package:plan_market/features/guest/shop_list_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'favorite_page.dart';
@@ -8,6 +9,191 @@ import 'market_list_page.dart';
 import 'market_detail_page.dart';
 import 'profile_page.dart';
 
+// ══════════════════════════════════════════════════════════
+// 🔌 API Service - พอ Backend พร้อมแก้แค่ไฟล์นี้ที่เดียว
+// ══════════════════════════════════════════════════════════
+class HomeApiService {
+  static const String baseUrl = 'https://api.planmarket.com/v1';
+
+  // ── Mock Data รูปภาพ ──────────────────────────────────
+  static const _img1 =
+      'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400';
+  static const _img2 =
+      'https://images.unsplash.com/photo-1533900298318-6b8da08a523e?w=400';
+  static const _img3 =
+      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400';
+  static const _img4 =
+      'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=400';
+  static const _img5 =
+      'https://images.unsplash.com/photo-1526367790999-0150786686a2?w=400';
+
+  // ── ตลาดแนะนำ (เรียงตามระยะทาง/ความนิยม) ────────────
+  // 🔌 TODO: เปลี่ยนเป็น GET $baseUrl/markets?sort=nearest
+  static Future<List<Map<String, dynamic>>> getRecommendedMarkets() async {
+    await Future.delayed(const Duration(milliseconds: 300)); // จำลอง network
+    return [
+      {
+        'id': 'm001',
+        'name': 'ตลาดจตุจักร (โซนกลางคืน)',
+        'distance': '1.2 กม.',
+        'location': 'จตุจักร กรุงเทพฯ',
+        'openTime': '17:00 - 23:00',
+        'isOpen': true,
+        'rating': 4.8,
+        'reviewCount': 1024,
+        'totalStalls': 120,
+        'availableStalls': 45,
+        'tags': ['อาหาร', 'แฟชั่น', 'มือสอง'],
+        'isFavorite': false,
+        'image': _img1,
+        // 🔌 Backend ควรส่ง field เหล่านี้มาด้วย
+        'highlight': 'คนเยอะที่สุด', // badge พิเศษ
+        'eventCount': 3, // งานที่กำลังจัด
+      },
+      {
+        'id': 'm002',
+        'name': 'ตลาดนัดรถไฟ',
+        'distance': '4.2 กม.',
+        'location': 'รามอินทรา กรุงเทพฯ',
+        'openTime': '18:00 - 23:00',
+        'isOpen': true,
+        'rating': 4.5,
+        'reviewCount': 856,
+        'totalStalls': 80,
+        'availableStalls': 20,
+        'tags': ['วินเทจ', 'ของสะสม', 'อาหาร'],
+        'isFavorite': false,
+        'image': _img2,
+        'highlight': 'มีงานพิเศษ',
+        'eventCount': 1,
+      },
+      {
+        'id': 'm003',
+        'name': 'ตลาดเซฟวันโก',
+        'distance': '7.2 กม.',
+        'location': 'สวนหลวง กรุงเทพฯ',
+        'openTime': '17:00 - 23:00',
+        'isOpen': true,
+        'rating': 4.3,
+        'reviewCount': 432,
+        'totalStalls': 60,
+        'availableStalls': 15,
+        'tags': ['อาหาร', 'ของสด', 'ราคาถูก'],
+        'isFavorite': false,
+        'image': _img3,
+        'highlight': 'ใกล้คุณ',
+        'eventCount': 0,
+      },
+    ];
+  }
+
+  // ── ร้านแนะนำสำหรับ Guest (เรียงตามความนิยม) ──────────
+  // 🔌 TODO: เปลี่ยนเป็น GET $baseUrl/shops?recommended=true
+  static Future<List<Map<String, dynamic>>> getRecommendedShops() async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    return [
+      {
+        'id': 's001',
+        'shopName': 'ร้านผัดไทยป้าแดง',
+        'category': 'อาหารไทย',
+        'marketName': 'ตลาดจตุจักร',
+        'distance': '1.2 กม.',
+        'isOpen': true,
+        'rating': 4.9,
+        'reviewCount': 340,
+        'image': _img3,
+        'tags': ['อาหาร', 'ยอดนิยม'],
+        'highlight': 'ยอดนิยม 🔥',
+      },
+      {
+        'id': 's002',
+        'shopName': 'ร้านส้มตำนางฟ้า',
+        'category': 'อาหารอีสาน',
+        'marketName': 'ตลาดนัดรถไฟ',
+        'distance': '4.2 กม.',
+        'isOpen': true,
+        'rating': 4.7,
+        'reviewCount': 215,
+        'image': _img4,
+        'tags': ['อาหาร', 'เผ็ด'],
+        'highlight': 'คะแนนสูง ⭐',
+      },
+      {
+        'id': 's003',
+        'shopName': 'ร้านของทะเลสดๆ',
+        'category': 'อาหารทะเล',
+        'marketName': 'ตลาดเซฟวันโก',
+        'distance': '7.2 กม.',
+        'isOpen': true,
+        'rating': 4.5,
+        'reviewCount': 178,
+        'image': _img5,
+        'tags': ['ทะเล', 'สด'],
+        'highlight': 'ใกล้คุณ 📍',
+      },
+      {
+        'id': 's004',
+        'shopName': 'โกโก้ในตำนาน',
+        'category': 'เครื่องดื่ม',
+        'marketName': 'ตลาดจตุจักร',
+        'distance': '1.2 กม.',
+        'isOpen': false,
+        'rating': 4.6,
+        'reviewCount': 290,
+        'image': _img1,
+        'tags': ['เครื่องดื่ม', 'ของหวาน'],
+        'highlight': 'มีงานพิเศษ 🎉',
+      },
+    ];
+  }
+
+  // ── ร้านที่ถูกใจของ User (ต้องมี token) ───────────────
+  // 🔌 TODO: เปลี่ยนเป็น GET $baseUrl/favorites
+  //          Header: Authorization: Bearer <token>
+  static Future<List<Map<String, dynamic>>> getUserFavorites(
+      String token) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    // Mock - พอ backend พร้อมเปลี่ยนเป็น http.get
+    return [
+      {
+        'id': 's001',
+        'shopName': 'ร้านผัดไทยป้าแดง',
+        'category': 'อาหารไทย',
+        'marketName': 'ตลาดจตุจักร',
+        'distance': '1.2 กม.',
+        'isOpen': true,
+        'rating': 4.9,
+        'image': _img3,
+        'tags': ['อาหาร', 'ยอดนิยม'],
+      },
+      {
+        'id': 's002',
+        'shopName': 'ร้านส้มตำนางฟ้า',
+        'category': 'อาหารอีสาน',
+        'marketName': 'ตลาดนัดรถไฟ',
+        'distance': '4.2 กม.',
+        'isOpen': true,
+        'rating': 4.7,
+        'image': _img4,
+        'tags': ['อาหาร', 'เผ็ด'],
+      },
+    ];
+  }
+
+  // ── Toggle Favorite (ต้องมี token) ────────────────────
+  // 🔌 TODO:
+  //   POST   $baseUrl/favorites/$shopId  → เพิ่ม
+  //   DELETE $baseUrl/favorites/$shopId  → ลบ
+  static Future<bool> toggleFavorite(
+      String shopId, bool isFavorite, String token) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    return !isFavorite; // return สถานะใหม่
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// HomePage
+// ══════════════════════════════════════════════════════════
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -17,111 +203,223 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int currentIndex = 2;
+  String? _userRole;
+  String? _userToken;
+  bool _isLoading = true;
 
-  // ── Mock ร้านที่ถูกใจ ─────────────────────────────────────
-  final List<Map<String, dynamic>> _favorites = [
-    {
-      'id': 'f001',
-      'name': 'ร้านอาชียะ',
-      'marketName': 'ตลาด : จตุจักร.',
-      'isOpen': true,
-      'image': 'assets/images/market_chatuchak.jpg.webp',
-    },
-    {
-      'id': 'f002',
-      'name': 'ร้านติวการส',
-      'marketName': 'ตลาด : ปากเกร็ด',
-      'isOpen': true,
-      'image': 'assets/images/market_rotfai.jpg',
-    },
-    {
-      'id': 'f003',
-      'name': 'ร้านมาลีผัดไทย',
-      'marketName': 'ตลาด : รถไฟ',
-      'isOpen': false,
-      'image': 'assets/images/market_sevongo.jpg',
-    },
-    {
-      'id': 'f004',
-      'name': 'ร้านสมชายข้าวต้ม',
-      'marketName': 'ตลาด : สวนลุม',
-      'isOpen': true,
-      'image': 'assets/images/market.png',
-    },
-  ];
+  // ข้อมูลที่โหลดจาก API
+  List<Map<String, dynamic>> _recommendedShops = [];
+  List<Map<String, dynamic>> _userFavorites = [];
+  List<Map<String, dynamic>> _markets = [];
 
-  // ── Mock ตลาดแนะนำ ────────────────────────────────────────
-  final List<Map<String, dynamic>> _markets = [
-    {
-      'id': 'm001',
-      'name': 'ตลาดจตุจักร(โซนกลางคืน)',
-      'distance': 'จตุจักร 1.2กม.',
-      'location': 'จตุจักร กรุงเทพฯ',
-      'openTime': '17.00-23.00 น.',
-      'isOpen': true,
-      'rating': 4.8,
-      'isFavorite': false,
-      'tags': ['อาหาร', 'แฟชั่น', 'มือสอง'],
-      'image': '../',
-    },
-    {
-      'id': 'm002',
-      'name': 'ตลาดนัดรถไฟ',
-      'distance': 'รามอินทรา 4.2กม.',
-      'location': 'รามอินทรา กรุงเทพฯ',
-      'openTime': '18.00-23.00 น.',
-      'isOpen': true,
-      'rating': 4.5,
-      'isFavorite': true,
-      'tags': ['อาหาร', 'แฟชั่น', 'มือสอง'],
-      'image': 'assets/images/market_rotfai.jpg',
-    },
-    {
-      'id': 'm003',
-      'name': 'ตลาดเซฟวันโก',
-      'distance': 'สวนหลวง 7.2กม.',
-      'location': 'สวนหลวง กรุงเทพฯ',
-      'openTime': '17.00-23.00 น.',
-      'isOpen': true,
-      'rating': 4.3,
-      'isFavorite': false,
-      'tags': ['อาหาร', 'แฟชั่น', 'มือสอง'],
-      'image': 'assets/images/market_sevongo.jpg',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _initPage();
+  }
 
-  // ── Navigation ─────────────────────────────────────────────
+  // ✅ โหลดข้อมูลทั้งหมด
+  Future<void> _initPage() async {
+    final prefs = await SharedPreferences.getInstance();
+    _userRole = prefs.getString('role');
+    _userToken = prefs.getString('token'); // 🔌 JWT Token จาก Backend
+
+    // โหลดข้อมูลตามประเภทผู้ใช้
+    await Future.wait([
+      _loadMarkets(),
+      _userRole != null && _userToken != null
+          ? _loadUserFavorites()
+          : _loadRecommendedShops(),
+    ]);
+
+    if (mounted) setState(() => _isLoading = false);
+  }
+
+  Future<void> _loadMarkets() async {
+    final markets = await HomeApiService.getRecommendedMarkets();
+    if (mounted) setState(() => _markets = markets);
+  }
+
+  Future<void> _loadRecommendedShops() async {
+    final shops = await HomeApiService.getRecommendedShops();
+    if (mounted) setState(() => _recommendedShops = shops);
+  }
+
+  Future<void> _loadUserFavorites() async {
+    final favs = await HomeApiService.getUserFavorites(_userToken!);
+    if (mounted) setState(() => _userFavorites = favs);
+  }
+
+  // ✅ Toggle ถูกใจ
+  Future<void> _toggleFavorite(Map<String, dynamic> shop) async {
+    if (_userRole == null) {
+      // Guest → แสดง dialog ให้ลงทะเบียน
+      _showLoginRequiredDialog();
+      return;
+    }
+
+    final newState = await HomeApiService.toggleFavorite(
+      shop['id'],
+      shop['isFavorite'] ?? false,
+      _userToken ?? '',
+    );
+
+    setState(() {
+      shop['isFavorite'] = newState;
+      if (newState) {
+        _userFavorites.add(shop);
+      } else {
+        _userFavorites.removeWhere((s) => s['id'] == shop['id']);
+      }
+    });
+  }
+
+  // ✅ Dialog แจ้งให้ Login
+  void _showLoginRequiredDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF6E9B4C), Color(0xFF8CBC63)],
+                  ),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(24),
+                    topRight: Radius.circular(24),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.favorite_rounded,
+                          color: Colors.white, size: 36),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'บันทึกร้านที่ถูกใจ',
+                      style: GoogleFonts.kanit(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    Text(
+                      'เข้าสู่ระบบเพื่อบันทึกร้านที่ถูกใจ\nและดูได้ทุกครั้งที่เข้าใช้งาน',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.kanit(
+                        fontSize: 14,
+                        color: Colors.grey,
+                        height: 1.6,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Color(0xFFD1D5DB)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            onPressed: () => Navigator.pop(context),
+                            child: Text('ข้ามไปก่อน',
+                                style: GoogleFonts.kanit(color: Colors.grey)),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF8CBC63),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            onPressed: () {
+                              Navigator.pop(context);
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const SelectRolePage()),
+                              );
+                            },
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.person_add_rounded, size: 18),
+                                const SizedBox(width: 6),
+                                Text('เข้าสู่ระบบ',
+                                    style: GoogleFonts.kanit(
+                                        fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // Navigation
+  // ══════════════════════════════════════════════════════════
   void _navigateToPage(int index) {
     if (index == currentIndex) return;
-
     switch (index) {
       case 0:
         Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const FavoritePage()),
-        );
+            context, MaterialPageRoute(builder: (_) => const FavoritePage()));
         break;
       case 1:
         Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const MarketListPage()),
-        );
+            context, MaterialPageRoute(builder: (_) => const MarketListPage()));
         break;
       case 2:
-        break; // อยู่หน้านี้แล้ว
+        break;
+      // แก้ทุกหน้าที่มี case 3: ใน _navigateToPage
       case 3:
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '🚧 ฟีเจอร์ร้านค้ากำลังมาเร็วๆนี้',
-              style: GoogleFonts.kanit(),
-            ),
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (_) => const ShopListPage()));
         break;
       case 4:
-        // ✅ เช็ค session ก่อน
         _navigateToProfile();
         break;
     }
@@ -130,26 +428,30 @@ class _HomePageState extends State<HomePage> {
   Future<void> _navigateToProfile() async {
     final prefs = await SharedPreferences.getInstance();
     final role = prefs.getString('role');
-
     if (!mounted) return;
-
     if (role == null) {
-      // ❌ ไม่มี session → ยังไม่ได้ login → ไปเลือกโหมด
       Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const SelectRolePage()),
-      );
+          context, MaterialPageRoute(builder: (_) => const SelectRolePage()));
     } else {
-      // ✅ มี session → เคย login แล้ว → ไปหน้าโปรไฟล์
       Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const GuestProfilePage()),
-      );
+          context, MaterialPageRoute(builder: (_) => const GuestProfilePage()));
     }
   }
 
+  // ══════════════════════════════════════════════════════════
+  // Build
+  // ══════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFEEEEEE),
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFF8CBC63)),
+        ),
+      );
+    }
+
     return Theme(
       data: Theme.of(context).copyWith(
         textTheme: GoogleFonts.kanitTextTheme(Theme.of(context).textTheme),
@@ -159,26 +461,46 @@ class _HomePageState extends State<HomePage> {
         body: SafeArea(
           child: Stack(
             children: [
-              // Wave Header
               SizedBox(
                 height: 180,
                 width: double.infinity,
                 child: CustomPaint(painter: _TopWavePainter()),
               ),
-
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Title "หน้าแรก" ──────────────────────
+                  // ── Header ─────────────────────────────
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                    child: Text(
-                      'หน้าแรก',
-                      style: GoogleFonts.kanit(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'หน้าแรก',
+                          style: GoogleFonts.kanit(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                        // ✅ แสดง badge role
+                        if (_userRole != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              _userRole == 'vendor' ? '🏪 ผู้ค้า' : '👤 ลูกค้า',
+                              style: GoogleFonts.kanit(
+                                fontSize: 12,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
 
@@ -186,18 +508,14 @@ class _HomePageState extends State<HomePage> {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                     child: GestureDetector(
-                      // ✅ แก้: ใช้ push แทน pushReplacement → กดกลับได้
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const MarketListPage(),
-                        ),
+                            builder: (_) => const MarketListPage()),
                       ),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
+                            horizontal: 16, vertical: 14),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(30),
@@ -211,11 +529,8 @@ class _HomePageState extends State<HomePage> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(
-                              Icons.search,
-                              color: Color(0xFF9CA3AF),
-                              size: 22,
-                            ),
+                            const Icon(Icons.search,
+                                color: Color(0xFF9CA3AF), size: 22),
                             const SizedBox(width: 10),
                             Text(
                               'ค้นหาตลาด/เขต/ชื่อร้าน',
@@ -232,19 +547,24 @@ class _HomePageState extends State<HomePage> {
 
                   // ── Content ────────────────────────────
                   Expanded(
-                    child: ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-                      children: [
-                        _buildFavoriteSection(),
-                        const SizedBox(height: 20),
-                        _buildRecommendSection(),
-                      ],
+                    child: RefreshIndicator(
+                      color: const Color(0xFF8CBC63),
+                      onRefresh: _initPage,
+                      child: ListView(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                        children: [
+                          // ✅ แยก section ตาม role
+                          _userRole != null
+                              ? _buildUserFavoriteSection()
+                              : _buildRecommendedShopsSection(),
+                          const SizedBox(height: 20),
+                          _buildRecommendedMarketsSection(),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
-
-              // Bottom Nav
               Positioned(
                 bottom: 0,
                 left: 0,
@@ -259,9 +579,298 @@ class _HomePageState extends State<HomePage> {
   }
 
   // ══════════════════════════════════════════════════════════
-  // ร้านที่ถูกใจ Section
+  // ✅ Section ร้านแนะนำ (สำหรับ Guest)
   // ══════════════════════════════════════════════════════════
-  Widget _buildFavoriteSection() {
+  Widget _buildRecommendedShopsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'ร้านแนะนำใกล้คุณ',
+                  style: GoogleFonts.kanit(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF374151),
+                  ),
+                ),
+                Text(
+                  'Recommended Shops',
+                  style: GoogleFonts.kanit(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+            // ✅ ปุ่มลงทะเบียน
+            GestureDetector(
+              onTap: () => Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const SelectRolePage()),
+              ),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF8CBC63).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                      color: const Color(0xFF8CBC63).withOpacity(0.4)),
+                ),
+                child: Text(
+                  '+ ลงทะเบียน',
+                  style: GoogleFonts.kanit(
+                    fontSize: 12,
+                    color: const Color(0xFF8CBC63),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        // ✅ Info Banner
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF0F9EB),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFF8CBC63).withOpacity(0.3)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.info_outline_rounded,
+                  color: Color(0xFF8CBC63), size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'ลงทะเบียนเพื่อบันทึกร้านที่ถูกใจและดูได้ทุกครั้ง',
+                  style: GoogleFonts.kanit(
+                    fontSize: 12,
+                    color: const Color(0xFF374151),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // ✅ List ร้านแนะนำ
+        SizedBox(
+          height: 185,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: _recommendedShops.length + 1,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (_, i) {
+              if (i == _recommendedShops.length) {
+                return _buildViewMoreButton();
+              }
+              return _buildRecommendedShopCard(_recommendedShops[i]);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Recommended Shop Card ─────────────────────────────────
+  Widget _buildRecommendedShopCard(Map<String, dynamic> shop) {
+    return Container(
+      width: 155,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16)),
+                child: SizedBox(
+                  height: 90,
+                  width: double.infinity,
+                  child: Image.network(
+                    shop['image'] ?? '',
+                    fit: BoxFit.cover,
+                    loadingBuilder: (_, child, progress) {
+                      if (progress == null) return child;
+                      return Container(
+                        color: Colors.grey,
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFF8CBC63),
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (_, __, ___) => Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF1B5E20), Color(0xFF8CBC63)],
+                        ),
+                      ),
+                      child: const Center(
+                        child: Icon(Icons.storefront_rounded,
+                            color: Colors.white70, size: 36),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // ✅ Highlight Badge
+              if (shop['highlight'] != null)
+                Positioned(
+                  top: 6,
+                  left: 6,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      shop['highlight'],
+                      style:
+                          GoogleFonts.kanit(fontSize: 9, color: Colors.white),
+                    ),
+                  ),
+                ),
+              // ✅ ปุ่มถูกใจ (กด → แสดง dialog ให้ login)
+              Positioned(
+                top: 6,
+                right: 6,
+                child: GestureDetector(
+                  onTap: () => _toggleFavorite(shop),
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      shop['isFavorite'] == true
+                          ? Icons.favorite
+                          : Icons.favorite_border,
+                      color: shop['isFavorite'] == true
+                          ? Colors.redAccent
+                          : Colors.grey,
+                      size: 16,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    shop['shopName'],
+                    style: GoogleFonts.kanit(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    shop['marketName'],
+                    style: GoogleFonts.kanit(fontSize: 11, color: Colors.grey),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Row(
+                    children: [
+                      const Icon(Icons.star_rounded,
+                          color: Color(0xFFFFB000), size: 12),
+                      Text(
+                        ' ${shop['rating']}',
+                        style:
+                            GoogleFonts.kanit(fontSize: 11, color: Colors.grey),
+                      ),
+                      const Spacer(),
+                      _buildStatusBadge(shop['isOpen'] ?? false, small: true),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── View More Button ──────────────────────────────────────
+  Widget _buildViewMoreButton() {
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const MarketListPage()),
+      ),
+      child: Container(
+        width: 110,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+              color: const Color(0xFF8CBC63).withOpacity(0.4), width: 1.5),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: const Color(0xFF8CBC63).withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.arrow_forward_rounded,
+                  color: Color(0xFF8CBC63), size: 24),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'ดูทั้งหมด',
+              style: GoogleFonts.kanit(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF8CBC63),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // ✅ Section ร้านที่ถูกใจ (สำหรับ User ที่ Login แล้ว)
+  // ══════════════════════════════════════════════════════════
+  Widget _buildUserFavoriteSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -280,200 +889,192 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 Text(
-                  'Favorite',
-                  style: GoogleFonts.kanit(
-                    fontSize: 12,
-                    color: Colors.grey,
-                  ),
+                  'My Favorites',
+                  style: GoogleFonts.kanit(fontSize: 12, color: Colors.grey),
                 ),
               ],
+            ),
+            GestureDetector(
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const FavoritePage())),
+              child: Text(
+                'ดูทั้งหมด',
+                style: GoogleFonts.kanit(
+                  fontSize: 13,
+                  color: const Color(0xFF8CBC63),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ],
         ),
         const SizedBox(height: 12),
-        SizedBox(
-          height: 170,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: _favorites.length + 1,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (_, i) {
-              if (i == _favorites.length) {
-                return _buildViewMoreFavoriteButton();
-              }
-              return _buildFavoriteCard(_favorites[i]);
-            },
+        if (_userFavorites.isEmpty)
+          // ✅ Empty State
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              children: [
+                const Icon(Icons.favorite_border_rounded,
+                    color: Color(0xFF8CBC63), size: 40),
+                const SizedBox(height: 8),
+                Text(
+                  'ยังไม่มีร้านที่ถูกใจ',
+                  style: GoogleFonts.kanit(color: Colors.grey),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'กดหัวใจที่ร้านไหนก็ได้เพื่อบันทึก',
+                  style: GoogleFonts.kanit(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+          )
+        else
+          SizedBox(
+            height: 185,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _userFavorites.length + 1,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (_, i) {
+                if (i == _userFavorites.length) {
+                  return _buildViewMoreButton();
+                }
+                return _buildUserFavoriteCard(_userFavorites[i]);
+              },
+            ),
           ),
-        ),
       ],
     );
   }
 
-  // ── ปุ่ม "ดูร้านอื่นๆ" ────────────────────────────────────
-  Widget _buildViewMoreFavoriteButton() {
-    return GestureDetector(
-      // ✅ แก้: ใช้ push แทน (กดกลับได้)
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const FavoritePage()),
-      ),
-      child: Container(
-        width: 120,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: const Color(0xFF8CBC63).withOpacity(0.4),
-            width: 1.5,
+  // ── User Favorite Card ─────────────────────────────────────
+  Widget _buildUserFavoriteCard(Map<String, dynamic> shop) {
+    return Container(
+      width: 155,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: const Color(0xFF8CBC63).withOpacity(0.15),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.arrow_forward_rounded,
-                color: Color(0xFF8CBC63),
-                size: 28,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'ดูร้านอื่นๆ',
-              style: GoogleFonts.kanit(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF8CBC63),
-              ),
-            ),
-            Text(
-              'ที่ถูกใจ',
-              style: GoogleFonts.kanit(
-                fontSize: 12,
-                color: const Color(0xFF8CBC63),
-              ),
-            ),
-          ],
-        ),
+        ],
       ),
-    );
-  }
-
-  // ── Favorite Card ──────────────────────────────────────────
-  Widget _buildFavoriteCard(Map<String, dynamic> shop) {
-    return GestureDetector(
-      // ✅ แก้: กดแล้วไปหน้ารายละเอียดร้าน (ไม่ใช่ FavoritePage)
-      onTap: () {
-        // TODO: เปลี่ยนเป็น ShopDetailPage เมื่อทำเสร็จ
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const FavoritePage()),
-        );
-      },
-      child: Container(
-        width: 155,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ✅ แก้: ใช้ SizedBox แทน Container (ไม่ต้องครอบซ้อน)
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
-              ),
-              child: SizedBox(
-                height: 90,
-                width: double.infinity,
-                child: Image.asset(
-                  shop['image'] ?? '',
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) {
-                    return Container(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16)),
+                child: SizedBox(
+                  height: 90,
+                  width: double.infinity,
+                  child: Image.network(
+                    shop['image'] ?? '',
+                    fit: BoxFit.cover,
+                    loadingBuilder: (_, child, progress) {
+                      if (progress == null) return child;
+                      return Container(
+                        color: Colors.grey,
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFF8CBC63),
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (_, __, ___) => Container(
                       decoration: const BoxDecoration(
                         gradient: LinearGradient(
                           colors: [Color(0xFF1B5E20), Color(0xFF8CBC63)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
                         ),
                       ),
                       child: const Center(
-                        child: Icon(
-                          Icons.storefront_rounded,
-                          color: Colors.white70,
-                          size: 36,
-                        ),
+                        child: Icon(Icons.storefront_rounded,
+                            color: Colors.white70, size: 36),
                       ),
-                    );
-                  },
+                    ),
+                  ),
                 ),
               ),
-            ),
-
-            // ข้อมูลร้าน
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      shop['name'],
-                      style: GoogleFonts.kanit(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+              // ✅ ปุ่มเอาออกจากถูกใจ
+              Positioned(
+                top: 6,
+                right: 6,
+                child: GestureDetector(
+                  onTap: () => _toggleFavorite(shop),
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      shape: BoxShape.circle,
                     ),
-                    Text(
-                      shop['marketName'],
-                      style: GoogleFonts.kanit(
-                        fontSize: 11,
-                        color: Colors.grey,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const Spacer(),
-                    _buildStatusBadge(shop['isOpen'] ?? false),
-                  ],
+                    child: const Icon(Icons.favorite,
+                        color: Colors.redAccent, size: 16),
+                  ),
                 ),
               ),
+            ],
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    shop['shopName'],
+                    style: GoogleFonts.kanit(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    shop['marketName'],
+                    style: GoogleFonts.kanit(fontSize: 11, color: Colors.grey),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Row(
+                    children: [
+                      const Icon(Icons.star_rounded,
+                          color: Color(0xFFFFB000), size: 12),
+                      Text(' ${shop['rating']}',
+                          style: GoogleFonts.kanit(
+                              fontSize: 11, color: Colors.grey)),
+                      const Spacer(),
+                      _buildStatusBadge(shop['isOpen'] ?? false, small: true),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   // ══════════════════════════════════════════════════════════
-  // ตลาดแนะนำ Section
+  // ✅ Section ตลาดแนะนำ (ทุก role เห็นเหมือนกัน)
   // ══════════════════════════════════════════════════════════
-  Widget _buildRecommendSection() {
+  Widget _buildRecommendedMarketsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -492,20 +1093,13 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 Text(
-                  'Recommended markets',
-                  style: GoogleFonts.kanit(
-                    fontSize: 12,
-                    color: Colors.grey,
-                  ),
+                  'Recommended Markets',
+                  style: GoogleFonts.kanit(fontSize: 12, color: Colors.grey),
                 ),
               ],
             ),
-            // ✅ ปุ่ม ใกล้ที่สุด — ตรงตามแบบ
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 6,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
@@ -514,21 +1108,15 @@ class _HomePageState extends State<HomePage> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    'ใกล้ที่สุด  ',
-                    style: GoogleFonts.kanit(
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  Text(
-                    'Nearest',
-                    style: GoogleFonts.kanit(
-                      fontSize: 12,
-                      color: const Color(0xFF8CBC63),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  Text('ใกล้ที่สุด  ',
+                      style:
+                          GoogleFonts.kanit(fontSize: 12, color: Colors.grey)),
+                  Text('Nearest',
+                      style: GoogleFonts.kanit(
+                        fontSize: 12,
+                        color: const Color(0xFF8CBC63),
+                        fontWeight: FontWeight.w600,
+                      )),
                 ],
               ),
             ),
@@ -545,9 +1133,7 @@ class _HomePageState extends State<HomePage> {
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (_) => MarketDetailPage(market: market),
-        ),
+        MaterialPageRoute(builder: (_) => MarketDetailPage(market: market)),
       ),
       child: Container(
         margin: const EdgeInsets.only(bottom: 14),
@@ -566,39 +1152,40 @@ class _HomePageState extends State<HomePage> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // รูปตลาด
               ClipRRect(
-                borderRadius: const BorderRadius.horizontal(
-                  left: Radius.circular(16),
-                ),
+                borderRadius:
+                    const BorderRadius.horizontal(left: Radius.circular(16)),
                 child: SizedBox(
                   width: 120,
-                  child: Image.asset(
+                  child: Image.network(
                     market['image'] ?? '',
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) {
+                    loadingBuilder: (_, child, progress) {
+                      if (progress == null) return child;
                       return Container(
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Color(0xFF1B5E20), Color(0xFF8CBC63)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                        ),
+                        color: Colors.grey,
                         child: const Center(
-                          child: Icon(
-                            Icons.store_mall_directory_rounded,
-                            color: Colors.white70,
-                            size: 44,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFF8CBC63),
                           ),
                         ),
                       );
                     },
+                    errorBuilder: (_, __, ___) => Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF1B5E20), Color(0xFF8CBC63)],
+                        ),
+                      ),
+                      child: const Center(
+                        child: Icon(Icons.store_mall_directory_rounded,
+                            color: Colors.white70, size: 44),
+                      ),
+                    ),
                   ),
                 ),
               ),
-
-              // ข้อมูลตลาด
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(12),
@@ -606,7 +1193,6 @@ class _HomePageState extends State<HomePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // ชื่อ + Status badge
                       Row(
                         children: [
                           Expanded(
@@ -625,27 +1211,49 @@ class _HomePageState extends State<HomePage> {
                         ],
                       ),
                       const SizedBox(height: 4),
-
-                      // ระยะทาง
-                      Text(
-                        'ระยะทาง : ${market['distance']}',
-                        style: GoogleFonts.kanit(
-                          fontSize: 12,
-                          color: Colors.grey,
+                      // ✅ แสดง event badge ถ้ามี
+                      if ((market['eventCount'] ?? 0) > 0)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              '🎉 มีงาน ${market['eventCount']} งาน',
+                              style: GoogleFonts.kanit(
+                                fontSize: 11,
+                                color: Colors.orange,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-
-                      // เวลา
                       Text(
-                        'วันนี้ ${market['openTime']}',
-                        style: GoogleFonts.kanit(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
+                        '📍 ${market['distance']}',
+                        style:
+                            GoogleFonts.kanit(fontSize: 12, color: Colors.grey),
                       ),
-                      const SizedBox(height: 8),
-
-                      // Tags สีเหลือง
+                      Text(
+                        '🕐 ${market['openTime']}',
+                        style:
+                            GoogleFonts.kanit(fontSize: 12, color: Colors.grey),
+                      ),
+                      Row(
+                        children: [
+                          const Icon(Icons.star_rounded,
+                              color: Color(0xFFFFB000), size: 13),
+                          Text(' ${market['rating']}',
+                              style: GoogleFonts.kanit(
+                                  fontSize: 12, color: Colors.grey)),
+                          Text(' (${market['reviewCount'] ?? 0} รีวิว)',
+                              style: GoogleFonts.kanit(
+                                  fontSize: 11, color: Colors.grey)),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
                       Wrap(
                         spacing: 6,
                         runSpacing: 4,
@@ -666,12 +1274,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   // ══════════════════════════════════════════════════════════
-  // ✅ Reusable Widgets — แยกออกมาลดโค้ดซ้ำ
+  // Reusable Widgets
   // ══════════════════════════════════════════════════════════
-
-  Widget _buildStatusBadge(bool isOpen) {
+  Widget _buildStatusBadge(bool isOpen, {bool small = false}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: EdgeInsets.symmetric(
+          horizontal: small ? 6 : 8, vertical: small ? 2 : 3),
       decoration: BoxDecoration(
         color: isOpen ? const Color(0xFF8CBC63) : Colors.grey,
         borderRadius: BorderRadius.circular(999),
@@ -680,18 +1288,16 @@ class _HomePageState extends State<HomePage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 6,
-            height: 6,
+            width: small ? 5 : 6,
+            height: small ? 5 : 6,
             decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-            ),
+                color: Colors.white, shape: BoxShape.circle),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 3),
           Text(
             isOpen ? 'เปิดอยู่' : 'ปิดแล้ว',
             style: GoogleFonts.kanit(
-              fontSize: 10,
+              fontSize: small ? 9 : 10,
               color: Colors.white,
               fontWeight: FontWeight.bold,
             ),
@@ -703,7 +1309,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildTag(String tag) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF3CD),
         borderRadius: BorderRadius.circular(20),
@@ -719,9 +1325,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ══════════════════════════════════════════════════════════
-  // Bottom Nav
-  // ══════════════════════════════════════════════════════════
+  // ── Bottom Nav ────────────────────────────────────────────
   Widget _buildBottomNav() {
     final items = [
       {'icon': Icons.favorite_rounded, 'label': 'ถูกใจ'},
@@ -730,7 +1334,6 @@ class _HomePageState extends State<HomePage> {
       {'icon': Icons.shopping_cart_outlined, 'label': 'ร้านค้า'},
       {'icon': Icons.account_circle_rounded, 'label': 'โปรไฟล์'},
     ];
-
     final double itemWidth = MediaQuery.of(context).size.width / items.length;
 
     return SizedBox(
@@ -763,21 +1366,16 @@ class _HomePageState extends State<HomePage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const SizedBox(height: 10),
-                          Icon(
-                            items[i]['icon'] as IconData,
-                            color: Colors.white
-                                .withOpacity(isSelected ? 0.0 : 0.8),
-                            size: 22,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            items[i]['label'] as String,
-                            style: GoogleFonts.kanit(
-                              fontSize: 10,
+                          Icon(items[i]['icon'] as IconData,
                               color: Colors.white
                                   .withOpacity(isSelected ? 0.0 : 0.8),
-                            ),
-                          ),
+                              size: 22),
+                          const SizedBox(height: 4),
+                          Text(items[i]['label'] as String,
+                              style: GoogleFonts.kanit(
+                                  fontSize: 10,
+                                  color: Colors.white
+                                      .withOpacity(isSelected ? 0.0 : 0.8))),
                         ],
                       ),
                     ),
@@ -786,49 +1384,38 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-
-          // Animated floating circle
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOutBack,
             left: (itemWidth * currentIndex) + (itemWidth / 2) - 31,
             top: 2,
-            child: GestureDetector(
-              onTap: () => _navigateToPage(currentIndex),
-              child: Column(
-                children: [
-                  Container(
-                    width: 62,
-                    height: 62,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF6E9B4C),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 3),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      items[currentIndex]['icon'] as IconData,
-                      color: Colors.white,
-                      size: 28,
-                    ),
+            child: Column(
+              children: [
+                Container(
+                  width: 62,
+                  height: 62,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF6E9B4C),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    items[currentIndex]['label'] as String,
+                  child: Icon(items[currentIndex]['icon'] as IconData,
+                      color: Colors.white, size: 28),
+                ),
+                const SizedBox(height: 4),
+                Text(items[currentIndex]['label'] as String,
                     style: GoogleFonts.kanit(
-                      fontSize: 10,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
+                        fontSize: 10,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold)),
+              ],
             ),
           ),
         ],
@@ -837,7 +1424,6 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// ── Wave Painter ──────────────────────────────────────────
 class _TopWavePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -849,17 +1435,9 @@ class _TopWavePainter extends CustomPainter {
       ..moveTo(0, 0)
       ..lineTo(0, size.height * 0.75)
       ..quadraticBezierTo(
-        size.width * 0.25,
-        size.height,
-        size.width * 0.5,
-        size.height * 0.85,
-      )
+          size.width * 0.25, size.height, size.width * 0.5, size.height * 0.85)
       ..quadraticBezierTo(
-        size.width * 0.75,
-        size.height * 0.7,
-        size.width,
-        size.height * 0.9,
-      )
+          size.width * 0.75, size.height * 0.7, size.width, size.height * 0.9)
       ..lineTo(size.width, 0)
       ..close();
 

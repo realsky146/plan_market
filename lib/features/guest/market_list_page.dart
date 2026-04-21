@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:plan_market/features/auth/select_role_page.dart';
+import 'package:plan_market/features/guest/shop_list_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'profile_page.dart'; // ✅ เปลี่ยนจาก select_role_page
+import 'profile_page.dart';
 import 'favorite_page.dart';
 import 'home_page.dart';
 import 'market_detail_page.dart';
 
 class MarketListPage extends StatefulWidget {
   const MarketListPage({super.key});
-
   @override
   State<MarketListPage> createState() => _MarketListPageState();
 }
@@ -18,6 +17,8 @@ class MarketListPage extends StatefulWidget {
 class _MarketListPageState extends State<MarketListPage> {
   int currentIndex = 1;
   String _searchText = '';
+  String? _userRole;
+  bool _isLoading = true;
 
   final List<Map<String, dynamic>> _markets = [
     {
@@ -32,7 +33,8 @@ class _MarketListPageState extends State<MarketListPage> {
       'availableStalls': 45,
       'tags': ['อาหาร', 'แฟชั่น', 'มือสอง'],
       'isFavorite': false,
-      'image': 'assets/images/market_chatuchak.jpg',
+      'image':
+          'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400',
     },
     {
       'id': 'm002',
@@ -46,7 +48,8 @@ class _MarketListPageState extends State<MarketListPage> {
       'availableStalls': 20,
       'tags': ['อาหาร', 'ของสด'],
       'isFavorite': true,
-      'image': 'assets/images/market_rotfai.jpg',
+      'image':
+          'https://images.unsplash.com/photo-1533900298318-6b8da08a523e?w=400',
     },
     {
       'id': 'm003',
@@ -60,14 +63,265 @@ class _MarketListPageState extends State<MarketListPage> {
       'availableStalls': 0,
       'tags': ['ของสด', 'อาหาร'],
       'isFavorite': false,
-      'image': 'assets/images/market_sevongo.jpg',
+      'image':
+          'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400',
     },
   ];
 
-  // ✅ ลบ delay ออก
+  @override
+  void initState() {
+    super.initState();
+    _loadUserRole();
+  }
+
+  // ✅ โหลด role จาก SharedPreferences
+  Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userRole = prefs.getString('role');
+      _isLoading = false;
+    });
+    // ✅ ถ้าไม่มี session → แสดง popup แนะนำลงทะเบียน
+    if (_userRole == null && mounted) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _showRegisterSuggestionDialog();
+      });
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // ✅ Popup แนะนำลงทะเบียน
+  // ══════════════════════════════════════════════════════════
+  void _showRegisterSuggestionDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ── Header ────────────────────────────────
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF6E9B4C), Color(0xFF8CBC63)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(24),
+                    topRight: Radius.circular(24),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.storefront_rounded,
+                        color: Colors.white,
+                        size: 36,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'ค้นหาตลาดใกล้คุณ',
+                      style: GoogleFonts.kanit(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      'Discover Markets Near You',
+                      style: GoogleFonts.kanit(
+                        fontSize: 13,
+                        color: Colors.white.withOpacity(0.8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // ── Body ───────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    // Info Box
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0F9EB),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: const Color(0xFF8CBC63).withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.info_outline_rounded,
+                            color: Color(0xFF8CBC63),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'ลงทะเบียนเพื่อเข้าถึงตลาดครบทุกแห่ง\n'
+                              'และรับสิทธิพิเศษมากมาย!',
+                              style: GoogleFonts.kanit(
+                                fontSize: 13,
+                                color: const Color(0xFF374151),
+                                height: 1.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Benefits
+                    _buildBenefit(
+                        Icons.storefront_rounded, 'ดูตลาดครบทุกแห่งในกรุงเทพฯ'),
+                    _buildBenefit(
+                        Icons.map_rounded, 'ดูแผนที่และเส้นทางไปตลาด'),
+                    _buildBenefit(
+                        Icons.favorite_rounded, 'บันทึกตลาดและร้านที่ถูกใจ'),
+                    _buildBenefit(
+                        Icons.notifications_rounded, 'รับแจ้งเตือนตลาดใหม่'),
+                    const SizedBox(height: 20),
+                    // Buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: 46,
+                            child: OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                side:
+                                    const BorderSide(color: Color(0xFFD1D5DB)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                              ),
+                              onPressed: () => Navigator.pop(context),
+                              child: Text(
+                                'ข้ามไปก่อน',
+                                style: GoogleFonts.kanit(
+                                  color: const Color(0xFF6B7280),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 2,
+                          child: SizedBox(
+                            height: 46,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF8CBC63),
+                                foregroundColor: Colors.white,
+                                elevation: 2,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                              ),
+                              onPressed: () {
+                                Navigator.pop(context);
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const SelectRolePage(),
+                                  ),
+                                );
+                              },
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.person_add_rounded,
+                                      size: 18),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'ลงทะเบียน',
+                                    style: GoogleFonts.kanit(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBenefit(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: const Color(0xFF8CBC63).withOpacity(0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: const Color(0xFF8CBC63), size: 18),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            text,
+            style: GoogleFonts.kanit(
+              fontSize: 13,
+              color: const Color(0xFF374151),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // Navigation
+  // ══════════════════════════════════════════════════════════
   void _navigateToPage(int index) {
     if (index == currentIndex) return;
-
     switch (index) {
       case 0:
         Navigator.pushReplacement(
@@ -79,13 +333,10 @@ class _MarketListPageState extends State<MarketListPage> {
         Navigator.pushReplacement(
             context, MaterialPageRoute(builder: (_) => const HomePage()));
         break;
+      // แก้ทุกหน้าที่มี case 3: ใน _navigateToPage
       case 3:
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('🚧 ฟีเจอร์ร้านค้ากำลังมาเร็วๆนี้',
-                style: GoogleFonts.kanit()),
-          ),
-        );
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (_) => const ShopListPage()));
         break;
       case 4:
         _navigateToProfile();
@@ -93,32 +344,32 @@ class _MarketListPageState extends State<MarketListPage> {
     }
   }
 
-// ✅ เพิ่ม method นี้ในทุกหน้า
   Future<void> _navigateToProfile() async {
     final prefs = await SharedPreferences.getInstance();
     final role = prefs.getString('role');
-
     if (!mounted) return;
-
     if (role == null) {
       Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const SelectRolePage()),
-      );
+          context, MaterialPageRoute(builder: (_) => const SelectRolePage()));
     } else {
       Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const GuestProfilePage()),
-      );
+          context, MaterialPageRoute(builder: (_) => const GuestProfilePage()));
     }
   }
 
+  // ══════════════════════════════════════════════════════════
+  // Build
+  // ══════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
-    final filtered = _markets.where((m) {
-      return m['name'].toString().contains(_searchText) ||
-          m['location'].toString().contains(_searchText);
-    }).toList();
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFEEEEEE),
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFF8CBC63)),
+        ),
+      );
+    }
 
     return Theme(
       data: Theme.of(context).copyWith(
@@ -135,6 +386,7 @@ class _MarketListPageState extends State<MarketListPage> {
                 child: CustomPaint(painter: _TopWavePainter()),
               ),
               Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
@@ -147,39 +399,12 @@ class _MarketListPageState extends State<MarketListPage> {
                       ),
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                    child: TextField(
-                      onChanged: (v) => setState(() => _searchText = v),
-                      style: GoogleFonts.kanit(fontSize: 13),
-                      decoration: InputDecoration(
-                        hintText: 'ค้นหาตลาด...',
-                        hintStyle:
-                            GoogleFonts.kanit(color: const Color(0xFFBDBDBD)),
-                        prefixIcon: const Icon(Icons.search),
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                      ),
-                    ),
-                  ),
+                  const SizedBox(height: 8),
+                  // ✅ แยก UI ตาม role
                   Expanded(
-                    child: filtered.isEmpty
-                        ? Center(
-                            child: Text('ไม่พบตลาดที่ค้นหา',
-                                style: GoogleFonts.kanit(color: Colors.grey)),
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
-                            itemCount: filtered.length,
-                            itemBuilder: (_, i) =>
-                                _buildMarketCard(filtered[i]),
-                          ),
+                    child: _userRole == null
+                        ? _buildGuestView()
+                        : _buildLoggedInView(),
                   ),
                 ],
               ),
@@ -196,6 +421,204 @@ class _MarketListPageState extends State<MarketListPage> {
     );
   }
 
+  // ══════════════════════════════════════════════════════════
+  // ✅ Guest View
+  // ══════════════════════════════════════════════════════════
+  Widget _buildGuestView() {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.search, color: Color(0xFF9CA3AF), size: 22),
+                const SizedBox(width: 10),
+                Text(
+                  'ค้นหาตลาด...',
+                  style: GoogleFonts.kanit(
+                    color: const Color(0xFF9CA3AF),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        Expanded(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF8CBC63).withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.storefront_rounded,
+                      size: 40,
+                      color: Color(0xFF8CBC63),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'ยังไม่ได้เข้าสู่ระบบ',
+                    style: GoogleFonts.kanit(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF374151),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'ลงทะเบียนเพื่อดูตลาดทั้งหมด\nและค้นหาร้านค้าที่ถูกใจ',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.kanit(
+                      fontSize: 13,
+                      color: Colors.grey,
+                      height: 1.6,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF8CBC63),
+                        foregroundColor: Colors.white,
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                      ),
+                      onPressed: () => _showRegisterSuggestionDialog(),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.person_add_rounded, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'ลงทะเบียนเพื่อดูตลาดทั้งหมด',
+                            style: GoogleFonts.kanit(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFF8CBC63)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                      ),
+                      onPressed: () => Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => const HomePage()),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.home_rounded,
+                              color: Color(0xFF8CBC63), size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'กลับหน้าหลัก',
+                            style: GoogleFonts.kanit(
+                              color: const Color(0xFF8CBC63),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // ✅ Logged In View
+  // ══════════════════════════════════════════════════════════
+  Widget _buildLoggedInView() {
+    final filtered = _markets.where((m) {
+      return m['name'].toString().contains(_searchText) ||
+          m['location'].toString().contains(_searchText);
+    }).toList();
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: TextField(
+            onChanged: (v) => setState(() => _searchText = v),
+            style: GoogleFonts.kanit(fontSize: 13),
+            decoration: InputDecoration(
+              hintText: 'ค้นหาตลาด...',
+              hintStyle: GoogleFonts.kanit(color: const Color(0xFFBDBDBD)),
+              prefixIcon: const Icon(Icons.search),
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(30),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+          ),
+        ),
+        Expanded(
+          child: filtered.isEmpty
+              ? Center(
+                  child: Text('ไม่พบตลาดที่ค้นหา',
+                      style: GoogleFonts.kanit(color: Colors.grey)),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+                  itemCount: filtered.length,
+                  itemBuilder: (_, i) => _buildMarketCard(filtered[i]),
+                ),
+        ),
+      ],
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // ✅ Market Card
+  // ══════════════════════════════════════════════════════════
   Widget _buildMarketCard(Map<String, dynamic> market) {
     return GestureDetector(
       onTap: () => Navigator.push(
@@ -217,16 +640,27 @@ class _MarketListPageState extends State<MarketListPage> {
         ),
         child: Row(
           children: [
-            // ✅ เพิ่มรูปตลาด
             ClipRRect(
               borderRadius:
                   const BorderRadius.horizontal(left: Radius.circular(16)),
               child: SizedBox(
                 width: 90,
                 height: 90,
-                child: Image.asset(
+                child: Image.network(
                   market['image'] ?? '',
                   fit: BoxFit.cover,
+                  loadingBuilder: (context, child, progress) {
+                    if (progress == null) return child;
+                    return Container(
+                      color: Colors.grey,
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Color(0xFF8CBC63),
+                        ),
+                      ),
+                    );
+                  },
                   errorBuilder: (_, __, ___) => Container(
                     color: const Color(0xFFE5E7EB),
                     child: const Icon(Icons.storefront_rounded,
@@ -323,6 +757,9 @@ class _MarketListPageState extends State<MarketListPage> {
     );
   }
 
+  // ══════════════════════════════════════════════════════════
+  // Bottom Nav
+  // ══════════════════════════════════════════════════════════
   Widget _buildBottomNav() {
     final items = [
       {'icon': Icons.favorite_border_rounded, 'label': 'ถูกใจ'},
@@ -331,9 +768,7 @@ class _MarketListPageState extends State<MarketListPage> {
       {'icon': Icons.shopping_cart_outlined, 'label': 'ร้านค้า'},
       {'icon': Icons.account_circle_rounded, 'label': 'โปรไฟล์'},
     ];
-
     final double itemWidth = MediaQuery.of(context).size.width / items.length;
-
     return SizedBox(
       height: 90,
       child: Stack(

@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:plan_market/features/guest/shop_list_page.dart';
 
 import '../guest/home_page.dart';
 import '../guest/favorite_page.dart';
@@ -37,8 +38,10 @@ class _LoginPageState extends State<LoginPage> {
           Navigator.pushReplacement(
               context, MaterialPageRoute(builder: (_) => const FavoritePage()));
           break;
+        // แก้ทุกหน้าที่มี case 3: ใน _navigateToPage
         case 3:
-          // TODO: ShopListPage
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (_) => const ShopListPage()));
           break;
         case 4:
           // อยู่หน้านี้แล้ว

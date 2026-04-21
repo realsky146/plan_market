@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:plan_market/features/guest/shop_list_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -40,11 +41,11 @@ class _GuestProfilePageState extends State<GuestProfilePage> {
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _userName = prefs.getString('name') ?? 'ผู้ใช้งาน'; // ✅
-      _userEmail = prefs.getString('email') ?? ''; // ✅
+      _userName = prefs.getString('name') ?? 'reaaaaaa456'; // ✅
+      _userEmail = prefs.getString('email') ?? 'seeeeeeee@gmail.co'; // ✅
       final imagePath = prefs.getString('profileImage');
       if (imagePath != null) _profileImage = File(imagePath);
-    });
+    });ฑ
     _nameCtrl.text = _userName;
   }
 
@@ -195,15 +196,10 @@ class _GuestProfilePageState extends State<GuestProfilePage> {
         Navigator.pushReplacement(
             context, MaterialPageRoute(builder: (_) => const HomePage()));
         break;
+      // แก้ทุกหน้าที่มี case 3: ใน _navigateToPage
       case 3:
-        // ✅ เพิ่ม Snackbar แจ้ง
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('🚧 ฟีเจอร์ร้านค้ากำลังมาเร็วๆนี้',
-                style: GoogleFonts.kanit()),
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (_) => const ShopListPage()));
         break;
       case 4:
         break; // อยู่หน้านี้แล้ว
