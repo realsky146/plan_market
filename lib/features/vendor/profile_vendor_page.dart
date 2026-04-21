@@ -664,7 +664,7 @@ class _VendorProfilePageState extends State<VendorProfilePage> {
           ),
           child: Center(
             child: Text(
-              'ข้อมูลร้านค้า',
+              'แก้ไขข้อมูลร้านค้า',
               style: GoogleFonts.kanit(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
