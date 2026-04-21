@@ -421,8 +421,8 @@ class VendorHome extends StatefulWidget {
 class _VendorHomeState extends State<VendorHome> {
   int currentIndex = 2;
   String _selectedStatus = 'all';
-  late List<Map<String, dynamic>> _bookings;
-  late List<Map<String, dynamic>> _notifications;
+  List<Map<String, dynamic>> _bookings = [];
+  List<Map<String, dynamic>> _notifications = [];
   bool _isLoading = true;
 
   @override

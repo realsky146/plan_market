@@ -34,7 +34,6 @@ class RoleNavigator {
     bool clearStack = true,
   }) {
     final page = getPageForRole(role: role, status: status);
-
     if (clearStack) {
       Navigator.pushAndRemoveUntil(
         context,
