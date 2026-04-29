@@ -5,6 +5,7 @@ import '../auth/select_role_page.dart';
 
 class MarketOwnerHome extends StatefulWidget {
   const MarketOwnerHome({super.key});
+
   @override
   State<MarketOwnerHome> createState() => _MarketOwnerHomeState();
 }
@@ -168,6 +169,7 @@ class _WaveHeaderPainter extends CustomPainter {
     final paint = Paint()
       ..color = const Color(0xFF8CBC63)
       ..style = PaintingStyle.fill;
+
     final path = Path();
     path.moveTo(0, 0);
     path.lineTo(0, size.height * 0.75);
@@ -187,7 +189,7 @@ class _WaveHeaderPainter extends CustomPainter {
 }
 
 // ══════════════════════════════════════════════════════════
-// Mock Data Models — พร้อมต่อ Backend
+// Mock Data Models
 // ══════════════════════════════════════════════════════════
 class StallModel {
   final String id;
@@ -206,7 +208,6 @@ class StallModel {
     required this.pricePerDay,
   });
 
-  // ✅ factory สำหรับแปลง JSON จาก Backend
   factory StallModel.fromJson(Map<String, dynamic> json) => StallModel(
         id: json['id'] ?? '',
         zone: json['zone'] ?? '',
@@ -410,10 +411,8 @@ class _DashboardTab extends StatelessWidget {
     );
   }
 
-  // ✅ Popup แผงทั้งหมด จัดเรียงตามโซน
   void _showAllStallsPopup(BuildContext context) {
     final zones = ['โซน A', 'โซน B', 'โซน C', 'โซน D'];
-
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
@@ -430,7 +429,6 @@ class _DashboardTab extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Header
               Container(
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
                 decoration: const BoxDecoration(
@@ -452,7 +450,6 @@ class _DashboardTab extends StatelessWidget {
                               fontWeight: FontWeight.bold,
                               color: Colors.white)),
                     ),
-                    // สรุปจำนวน
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
@@ -477,7 +474,6 @@ class _DashboardTab extends StatelessWidget {
                   ],
                 ),
               ),
-              // Legend
               Container(
                 color: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 8),
@@ -490,7 +486,6 @@ class _DashboardTab extends StatelessWidget {
                   ],
                 ),
               ),
-              // แผงแยกโซน
               Flexible(
                 child: ListView(
                   padding: const EdgeInsets.all(12),
@@ -500,7 +495,6 @@ class _DashboardTab extends StatelessWidget {
                     final bookedCount =
                         zoneStalls.where((s) => s.isBooked).length;
                     final freeCount = zoneStalls.length - bookedCount;
-
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
@@ -517,7 +511,6 @@ class _DashboardTab extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Zone Header
                           Container(
                             padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
                             decoration: BoxDecoration(
@@ -543,7 +536,6 @@ class _DashboardTab extends StatelessWidget {
                               ],
                             ),
                           ),
-                          // Grid แผง
                           Padding(
                             padding: const EdgeInsets.all(10),
                             child: Wrap(
@@ -713,16 +705,12 @@ class _DashboardTab extends StatelessWidget {
                       const SizedBox(height: 8),
                       _buildRevenueCard(),
                       const SizedBox(height: 16),
-                      // ✅ คำขอจอง — มีปุ่มดูทั้งหมด
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           _sectionTitle('คำขอจองล่าสุด'),
                           GestureDetector(
-                            onTap: () {
-                              // ✅ ไปหน้าการจอง (Tab index 2)
-                              // หา MarketOwnerHome state
-                            },
+                            onTap: () {},
                             child: Text(
                               'ดูทั้งหมด →',
                               style: GoogleFonts.kanit(
@@ -735,7 +723,6 @@ class _DashboardTab extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      // ✅ แสดงแค่ pending 3 รายการ
                       ...mockBookings
                           .where((b) => b.status == 'pending')
                           .take(3)
@@ -826,7 +813,6 @@ class _DashboardTab extends StatelessWidget {
           const SizedBox(height: 16),
           Row(
             children: [
-              // ✅ กดแล้วเปิด Popup แผงทั้งหมด
               _statCard(
                 'แผงทั้งหมด',
                 '$total',
@@ -902,7 +888,6 @@ class _DashboardTab extends StatelessWidget {
             color: const Color(0xFF374151)));
   }
 
-  // ✅ Booking Card — มีปุ่ม "ดูคำขอ" ไปหน้าร้านค้า
   Widget _bookingRequestCard(
       BuildContext context, BookingRequestModel booking) {
     return Container(
@@ -941,7 +926,6 @@ class _DashboardTab extends StatelessWidget {
               ],
             ),
           ),
-          // ✅ ปุ่มดูคำขอ — ไปหน้าร้านค้า (Tab 3)
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF8CBC63),
@@ -962,7 +946,6 @@ class _DashboardTab extends StatelessWidget {
     );
   }
 
-  // ✅ Popup รายละเอียดคำขอจอง
   void _showBookingDetail(BuildContext context, BookingRequestModel booking) {
     showDialog(
       context: context,
@@ -1024,7 +1007,6 @@ class _DashboardTab extends StatelessWidget {
                     _detailTile(
                         Icons.email_rounded, 'อีเมล', booking.vendorEmail),
                     const SizedBox(height: 16),
-                    // ✅ ปุ่มอนุมัติ/ปฏิเสธ
                     Row(
                       children: [
                         Expanded(
@@ -1104,13 +1086,9 @@ class _DashboardTab extends StatelessWidget {
     );
   }
 
-  // ✅ ปุ่มส่งประกาศ — ไปหน้าประกาศ (Tab 4)
   Widget _broadcastCard(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // ✅ Navigate ไป BroadcastTab (index 4)
-        // ต้องเข้าถึง _MarketOwnerHomeState
-        // ใช้ Navigator หรือ callback แทน
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => const Scaffold(
@@ -1171,6 +1149,7 @@ class _DashboardTab extends StatelessWidget {
 // ══════════════════════════════════════════════════════════
 class _StallLayoutTab extends StatefulWidget {
   const _StallLayoutTab();
+
   @override
   State<_StallLayoutTab> createState() => _StallLayoutTabState();
 }
@@ -1379,18 +1358,17 @@ class _StallLayoutTabState extends State<_StallLayoutTab> {
 // ══════════════════════════════════════════════════════════
 class _BookingTab extends StatefulWidget {
   const _BookingTab();
+
   @override
   State<_BookingTab> createState() => _BookingTabState();
 }
 
 class _BookingTabState extends State<_BookingTab> {
-  // ✅ ใช้ List จาก mockBookings และ manage state
   late List<Map<String, dynamic>> _requests;
 
   @override
   void initState() {
     super.initState();
-    // ✅ แปลง BookingRequestModel เป็น Map เพื่อจัดการ state ได้ง่าย
     _requests = mockBookings
         .map((b) => {
               'id': b.id,
@@ -1428,9 +1406,11 @@ class _BookingTabState extends State<_BookingTab> {
           final r = _requests[i];
           final isPending = r['status'] == 'pending';
           final isApproved = r['status'] == 'approved';
+
           Color statusColor;
           String statusText;
           Color statusBg;
+
           if (isPending) {
             statusColor = const Color(0xFFB45309);
             statusBg = const Color(0xFFFFF3CD);
@@ -1556,16 +1536,16 @@ class _BookingTabState extends State<_BookingTab> {
 }
 
 // ══════════════════════════════════════════════════════════
-// Tab 4: Vendor
+// Tab 4: Vendor (ตัดส่วน Score ออกแล้ว)
 // ══════════════════════════════════════════════════════════
 class _VendorTab extends StatelessWidget {
   const _VendorTab();
 
   static const _vendors = [
-    {'name': 'ร้านอาชียะ', 'type': 'อาหาร', 'stall': 'B01', 'score': 92},
-    {'name': 'ร้านมานี', 'type': 'เสื้อผ้า', 'stall': 'A03', 'score': 75},
-    {'name': 'ร้านสมชาย', 'type': 'มือสอง', 'stall': 'C02', 'score': 45},
-    {'name': 'ร้านวิไล', 'type': 'ของใช้', 'stall': 'D05', 'score': 30},
+    {'name': 'ร้านอาชียะ', 'type': 'อาหาร', 'stall': 'B01'},
+    {'name': 'ร้านมานี', 'type': 'เสื้อผ้า', 'stall': 'A03'},
+    {'name': 'ร้านสมชาย', 'type': 'มือสอง', 'stall': 'C02'},
+    {'name': 'ร้านวิไล', 'type': 'ของใช้', 'stall': 'D05'},
   ];
 
   @override
@@ -1585,12 +1565,7 @@ class _VendorTab extends StatelessWidget {
         separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (_, i) {
           final v = _vendors[i];
-          final score = v['score'] as int;
-          final scoreColor = score >= 80
-              ? const Color(0xFF22C55E)
-              : score >= 60
-                  ? const Color(0xFFFFB000)
-                  : const Color(0xFFEF4444);
+
           return Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
@@ -1605,23 +1580,24 @@ class _VendorTab extends StatelessWidget {
             ),
             child: Row(
               children: [
+                // ── Avatar ──
                 Container(
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(
-                    color: scoreColor.withOpacity(0.1),
+                    color: const Color(0xFF8CBC63).withOpacity(0.1),
                     shape: BoxShape.circle,
-                    border: Border.all(color: scoreColor, width: 2),
+                    border:
+                        Border.all(color: const Color(0xFF8CBC63), width: 2),
                   ),
-                  child: Center(
-                    child: Text('$score',
-                        style: GoogleFonts.kanit(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: scoreColor)),
+                  child: const Center(
+                    child:
+                        Icon(Icons.store, color: Color(0xFF8CBC63), size: 24),
                   ),
                 ),
                 const SizedBox(width: 14),
+
+                // ── ชื่อร้าน / ประเภท / แผง ──
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1635,58 +1611,17 @@ class _VendorTab extends StatelessWidget {
                     ],
                   ),
                 ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (score < 60)
-                      IconButton(
-                        icon: const Icon(Icons.warning_amber,
-                            color: Color(0xFFFFB000), size: 20),
-                        onPressed: () => _showWarning(context, v),
-                      ),
-                    IconButton(
-                      icon: const Icon(Icons.info_outline,
-                          color: Color(0xFF6B7280), size: 20),
-                      onPressed: () => _showDetail(context, v),
-                    ),
-                  ],
+
+                // ── ปุ่ม Info ──
+                IconButton(
+                  icon: const Icon(Icons.info_outline,
+                      color: Color(0xFF6B7280), size: 20),
+                  onPressed: () => _showDetail(context, v),
                 ),
               ],
             ),
           );
         },
-      ),
-    );
-  }
-
-  void _showWarning(BuildContext context, Map<String, Object> v) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('ส่งคำเตือน', style: GoogleFonts.kanit()),
-        content:
-            Text('ส่งคำเตือนไปยัง ${v['name']}?', style: GoogleFonts.kanit()),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('ยกเลิก', style: GoogleFonts.kanit()),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF8CBC63),
-                foregroundColor: Colors.white),
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text('ส่งคำเตือนถึง ${v['name']} แล้ว',
-                    style: GoogleFonts.kanit()),
-                backgroundColor: const Color(0xFF8CBC63),
-              ));
-            },
-            child: Text('ส่ง', style: GoogleFonts.kanit()),
-          ),
-        ],
       ),
     );
   }
@@ -1711,8 +1646,6 @@ class _VendorTab extends StatelessWidget {
             _infoRow('ประเภท', v['type'] as String),
             const SizedBox(height: 8),
             _infoRow('แผง', v['stall'] as String),
-            const SizedBox(height: 8),
-            _infoRow('คะแนน', '${v['score']}/100'),
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
@@ -1752,6 +1685,7 @@ class _VendorTab extends StatelessWidget {
 // ══════════════════════════════════════════════════════════
 class _BroadcastTab extends StatefulWidget {
   const _BroadcastTab();
+
   @override
   State<_BroadcastTab> createState() => _BroadcastTabState();
 }
@@ -1761,7 +1695,6 @@ class _BroadcastTabState extends State<_BroadcastTab> {
   String _target = 'ทุกคนในตลาด';
   final _targets = ['ทุกคนในตลาด', 'ผู้เช่าวันนี้', 'เฉพาะโซน A', 'เฉพาะโซน B'];
 
-  // ✅ Mock broadcast history — พร้อมต่อ Backend
   final List<Map<String, dynamic>> _broadcastHistory = [
     {
       'message': 'วันนี้ตลาดปิดเวลา 22:00 น.',
@@ -1871,7 +1804,6 @@ class _BroadcastTabState extends State<_BroadcastTab> {
                   ));
                   return;
                 }
-                // ✅ เพิ่มใน history (จริงๆ ส่ง API)
                 setState(() {
                   _broadcastHistory.insert(0, {
                     'message': _msgCtrl.text.trim(),
@@ -1914,7 +1846,6 @@ class _BroadcastTabState extends State<_BroadcastTab> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // ✅ แสดง target
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 2),

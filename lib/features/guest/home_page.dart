@@ -3,19 +3,17 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:plan_market/features/auth/select_role_page.dart';
 import 'package:plan_market/features/guest/shop_list_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'favorite_page.dart';
 import 'market_list_page.dart';
 import 'market_detail_page.dart';
 import 'profile_page.dart';
 
 // ══════════════════════════════════════════════════════════
-// 🔌 API Service - พอ Backend พร้อมแก้แค่ไฟล์นี้ที่เดียว
+// 🔌 API Service
 // ══════════════════════════════════════════════════════════
 class HomeApiService {
   static const String baseUrl = 'https://api.planmarket.com/v1';
 
-  // ── Mock Data รูปภาพ ──────────────────────────────────
   static const _img1 =
       'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400';
   static const _img2 =
@@ -27,10 +25,9 @@ class HomeApiService {
   static const _img5 =
       'https://images.unsplash.com/photo-1526367790999-0150786686a2?w=400';
 
-  // ── ตลาดแนะนำ (เรียงตามระยะทาง/ความนิยม) ────────────
-  // 🔌 TODO: เปลี่ยนเป็น GET $baseUrl/markets?sort=nearest
+  // 🔌 TODO: GET $baseUrl/markets?sort=nearest
   static Future<List<Map<String, dynamic>>> getRecommendedMarkets() async {
-    await Future.delayed(const Duration(milliseconds: 300)); // จำลอง network
+    await Future.delayed(const Duration(milliseconds: 300));
     return [
       {
         'id': 'm001',
@@ -39,16 +36,13 @@ class HomeApiService {
         'location': 'จตุจักร กรุงเทพฯ',
         'openTime': '17:00 - 23:00',
         'isOpen': true,
-        'rating': 4.8,
-        'reviewCount': 1024,
         'totalStalls': 120,
         'availableStalls': 45,
         'tags': ['อาหาร', 'แฟชั่น', 'มือสอง'],
         'isFavorite': false,
         'image': _img1,
-        // 🔌 Backend ควรส่ง field เหล่านี้มาด้วย
-        'highlight': 'คนเยอะที่สุด', // badge พิเศษ
-        'eventCount': 3, // งานที่กำลังจัด
+        'highlight': 'คนเยอะที่สุด',
+        'eventCount': 3,
       },
       {
         'id': 'm002',
@@ -57,8 +51,6 @@ class HomeApiService {
         'location': 'รามอินทรา กรุงเทพฯ',
         'openTime': '18:00 - 23:00',
         'isOpen': true,
-        'rating': 4.5,
-        'reviewCount': 856,
         'totalStalls': 80,
         'availableStalls': 20,
         'tags': ['วินเทจ', 'ของสะสม', 'อาหาร'],
@@ -74,8 +66,6 @@ class HomeApiService {
         'location': 'สวนหลวง กรุงเทพฯ',
         'openTime': '17:00 - 23:00',
         'isOpen': true,
-        'rating': 4.3,
-        'reviewCount': 432,
         'totalStalls': 60,
         'availableStalls': 15,
         'tags': ['อาหาร', 'ของสด', 'ราคาถูก'],
@@ -87,8 +77,7 @@ class HomeApiService {
     ];
   }
 
-  // ── ร้านแนะนำสำหรับ Guest (เรียงตามความนิยม) ──────────
-  // 🔌 TODO: เปลี่ยนเป็น GET $baseUrl/shops?recommended=true
+  // 🔌 TODO: GET $baseUrl/shops?recommended=true
   static Future<List<Map<String, dynamic>>> getRecommendedShops() async {
     await Future.delayed(const Duration(milliseconds: 300));
     return [
@@ -99,11 +88,8 @@ class HomeApiService {
         'marketName': 'ตลาดจตุจักร',
         'distance': '1.2 กม.',
         'isOpen': true,
-        'rating': 4.9,
-        'reviewCount': 340,
         'image': _img3,
         'tags': ['อาหาร', 'ยอดนิยม'],
-        'highlight': 'ยอดนิยม 🔥',
       },
       {
         'id': 's002',
@@ -112,11 +98,8 @@ class HomeApiService {
         'marketName': 'ตลาดนัดรถไฟ',
         'distance': '4.2 กม.',
         'isOpen': true,
-        'rating': 4.7,
-        'reviewCount': 215,
         'image': _img4,
         'tags': ['อาหาร', 'เผ็ด'],
-        'highlight': 'คะแนนสูง ⭐',
       },
       {
         'id': 's003',
@@ -125,11 +108,8 @@ class HomeApiService {
         'marketName': 'ตลาดเซฟวันโก',
         'distance': '7.2 กม.',
         'isOpen': true,
-        'rating': 4.5,
-        'reviewCount': 178,
         'image': _img5,
         'tags': ['ทะเล', 'สด'],
-        'highlight': 'ใกล้คุณ 📍',
       },
       {
         'id': 's004',
@@ -138,22 +118,16 @@ class HomeApiService {
         'marketName': 'ตลาดจตุจักร',
         'distance': '1.2 กม.',
         'isOpen': false,
-        'rating': 4.6,
-        'reviewCount': 290,
         'image': _img1,
         'tags': ['เครื่องดื่ม', 'ของหวาน'],
-        'highlight': 'มีงานพิเศษ 🎉',
       },
     ];
   }
 
-  // ── ร้านที่ถูกใจของ User (ต้องมี token) ───────────────
-  // 🔌 TODO: เปลี่ยนเป็น GET $baseUrl/favorites
-  //          Header: Authorization: Bearer <token>
+  // 🔌 TODO: GET $baseUrl/favorites (Header: Authorization: Bearer <token>)
   static Future<List<Map<String, dynamic>>> getUserFavorites(
       String token) async {
     await Future.delayed(const Duration(milliseconds: 300));
-    // Mock - พอ backend พร้อมเปลี่ยนเป็น http.get
     return [
       {
         'id': 's001',
@@ -162,7 +136,6 @@ class HomeApiService {
         'marketName': 'ตลาดจตุจักร',
         'distance': '1.2 กม.',
         'isOpen': true,
-        'rating': 4.9,
         'image': _img3,
         'tags': ['อาหาร', 'ยอดนิยม'],
       },
@@ -173,21 +146,17 @@ class HomeApiService {
         'marketName': 'ตลาดนัดรถไฟ',
         'distance': '4.2 กม.',
         'isOpen': true,
-        'rating': 4.7,
         'image': _img4,
         'tags': ['อาหาร', 'เผ็ด'],
       },
     ];
   }
 
-  // ── Toggle Favorite (ต้องมี token) ────────────────────
-  // 🔌 TODO:
-  //   POST   $baseUrl/favorites/$shopId  → เพิ่ม
-  //   DELETE $baseUrl/favorites/$shopId  → ลบ
+  // 🔌 TODO: POST/DELETE $baseUrl/favorites/$shopId
   static Future<bool> toggleFavorite(
       String shopId, bool isFavorite, String token) async {
     await Future.delayed(const Duration(milliseconds: 200));
-    return !isFavorite; // return สถานะใหม่
+    return !isFavorite;
   }
 }
 
@@ -207,7 +176,6 @@ class _HomePageState extends State<HomePage> {
   String? _userToken;
   bool _isLoading = true;
 
-  // ข้อมูลที่โหลดจาก API
   List<Map<String, dynamic>> _recommendedShops = [];
   List<Map<String, dynamic>> _userFavorites = [];
   List<Map<String, dynamic>> _markets = [];
@@ -218,13 +186,11 @@ class _HomePageState extends State<HomePage> {
     _initPage();
   }
 
-  // ✅ โหลดข้อมูลทั้งหมด
   Future<void> _initPage() async {
     final prefs = await SharedPreferences.getInstance();
     _userRole = prefs.getString('role');
-    _userToken = prefs.getString('token'); // 🔌 JWT Token จาก Backend
+    _userToken = prefs.getString('token');
 
-    // โหลดข้อมูลตามประเภทผู้ใช้
     await Future.wait([
       _loadMarkets(),
       _userRole != null && _userToken != null
@@ -250,20 +216,16 @@ class _HomePageState extends State<HomePage> {
     if (mounted) setState(() => _userFavorites = favs);
   }
 
-  // ✅ Toggle ถูกใจ
   Future<void> _toggleFavorite(Map<String, dynamic> shop) async {
     if (_userRole == null) {
-      // Guest → แสดง dialog ให้ลงทะเบียน
       _showLoginRequiredDialog();
       return;
     }
-
     final newState = await HomeApiService.toggleFavorite(
       shop['id'],
       shop['isFavorite'] ?? false,
       _userToken ?? '',
     );
-
     setState(() {
       shop['isFavorite'] = newState;
       if (newState) {
@@ -274,7 +236,6 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  // ✅ Dialog แจ้งให้ Login
   void _showLoginRequiredDialog() {
     showDialog(
       context: context,
@@ -414,7 +375,6 @@ class _HomePageState extends State<HomePage> {
         break;
       case 2:
         break;
-      // แก้ทุกหน้าที่มี case 3: ใน _navigateToPage
       case 3:
         Navigator.pushReplacement(
             context, MaterialPageRoute(builder: (_) => const ShopListPage()));
@@ -469,7 +429,7 @@ class _HomePageState extends State<HomePage> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Header ─────────────────────────────
+                  // ── Header ──────────────────────────────
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                     child: Row(
@@ -483,7 +443,6 @@ class _HomePageState extends State<HomePage> {
                             color: Colors.white,
                           ),
                         ),
-                        // ✅ แสดง badge role
                         if (_userRole != null)
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -493,7 +452,7 @@ class _HomePageState extends State<HomePage> {
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
-                              _userRole == 'vendor' ? '🏪 ผู้ค้า' : '👤 ลูกค้า',
+                              _userRole == 'vendor' ? ' ผู้ค้า' : ' ลูกค้า',
                               style: GoogleFonts.kanit(
                                 fontSize: 12,
                                 color: Colors.white,
@@ -503,8 +462,7 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                   ),
-
-                  // ── Search Bar ──────────────────────────
+                  // ── Search Bar ───────────────────────────
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                     child: GestureDetector(
@@ -544,8 +502,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
-
-                  // ── Content ────────────────────────────
+                  // ── Content ──────────────────────────────
                   Expanded(
                     child: RefreshIndicator(
                       color: const Color(0xFF8CBC63),
@@ -553,7 +510,6 @@ class _HomePageState extends State<HomePage> {
                       child: ListView(
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                         children: [
-                          // ✅ แยก section ตาม role
                           _userRole != null
                               ? _buildUserFavoriteSection()
                               : _buildRecommendedShopsSection(),
@@ -579,7 +535,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   // ══════════════════════════════════════════════════════════
-  // ✅ Section ร้านแนะนำ (สำหรับ Guest)
+  // Section ร้านแนะนำ (Guest)
   // ══════════════════════════════════════════════════════════
   Widget _buildRecommendedShopsSection() {
     return Column(
@@ -605,7 +561,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             ),
-            // ✅ ปุ่มลงทะเบียน
             GestureDetector(
               onTap: () => Navigator.pushReplacement(
                 context,
@@ -633,7 +588,6 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
         const SizedBox(height: 8),
-        // ✅ Info Banner
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(12),
@@ -660,9 +614,8 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
         ),
-        // ✅ List ร้านแนะนำ
         SizedBox(
-          height: 185,
+          height: 165,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: _recommendedShops.length + 1,
@@ -679,7 +632,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ── Recommended Shop Card ─────────────────────────────────
+  // ── Recommended Shop Card ────────────────────────────────
   Widget _buildRecommendedShopCard(Map<String, dynamic> shop) {
     return Container(
       width: 155,
@@ -734,7 +687,6 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
-              // ✅ Highlight Badge
               if (shop['highlight'] != null)
                 Positioned(
                   top: 6,
@@ -753,7 +705,6 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
-              // ✅ ปุ่มถูกใจ (กด → แสดง dialog ให้ login)
               Positioned(
                 top: 6,
                 right: 6,
@@ -802,19 +753,8 @@ class _HomePageState extends State<HomePage> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  Row(
-                    children: [
-                      const Icon(Icons.star_rounded,
-                          color: Color(0xFFFFB000), size: 12),
-                      Text(
-                        ' ${shop['rating']}',
-                        style:
-                            GoogleFonts.kanit(fontSize: 11, color: Colors.grey),
-                      ),
-                      const Spacer(),
-                      _buildStatusBadge(shop['isOpen'] ?? false, small: true),
-                    ],
-                  ),
+                  const Spacer(),
+                  _buildStatusBadge(shop['isOpen'] ?? false, small: true),
                 ],
               ),
             ),
@@ -824,7 +764,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ── View More Button ──────────────────────────────────────
+  // ── View More Button ─────────────────────────────────────
   Widget _buildViewMoreButton() {
     return GestureDetector(
       onTap: () => Navigator.push(
@@ -868,7 +808,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   // ══════════════════════════════════════════════════════════
-  // ✅ Section ร้านที่ถูกใจ (สำหรับ User ที่ Login แล้ว)
+  // Section ร้านที่ถูกใจ (User ที่ Login แล้ว)
   // ══════════════════════════════════════════════════════════
   Widget _buildUserFavoriteSection() {
     return Column(
@@ -910,7 +850,6 @@ class _HomePageState extends State<HomePage> {
         ),
         const SizedBox(height: 12),
         if (_userFavorites.isEmpty)
-          // ✅ Empty State
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -937,7 +876,7 @@ class _HomePageState extends State<HomePage> {
           )
         else
           SizedBox(
-            height: 185,
+            height: 165,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: _userFavorites.length + 1,
@@ -954,7 +893,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ── User Favorite Card ─────────────────────────────────────
+  // ── User Favorite Card ───────────────────────────────────
   Widget _buildUserFavoriteCard(Map<String, dynamic> shop) {
     return Container(
       width: 155,
@@ -1009,7 +948,6 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
-              // ✅ ปุ่มเอาออกจากถูกใจ
               Positioned(
                 top: 6,
                 right: 6,
@@ -1051,17 +989,8 @@ class _HomePageState extends State<HomePage> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  Row(
-                    children: [
-                      const Icon(Icons.star_rounded,
-                          color: Color(0xFFFFB000), size: 12),
-                      Text(' ${shop['rating']}',
-                          style: GoogleFonts.kanit(
-                              fontSize: 11, color: Colors.grey)),
-                      const Spacer(),
-                      _buildStatusBadge(shop['isOpen'] ?? false, small: true),
-                    ],
-                  ),
+                  const Spacer(),
+                  _buildStatusBadge(shop['isOpen'] ?? false, small: true),
                 ],
               ),
             ),
@@ -1072,7 +1001,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   // ══════════════════════════════════════════════════════════
-  // ✅ Section ตลาดแนะนำ (ทุก role เห็นเหมือนกัน)
+  // Section ตลาดแนะนำ
   // ══════════════════════════════════════════════════════════
   Widget _buildRecommendedMarketsSection() {
     return Column(
@@ -1128,7 +1057,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ── Market Card ────────────────────────────────────────────
+  // ── Market Card ──────────────────────────────────────────
   Widget _buildMarketCard(Map<String, dynamic> market) {
     return GestureDetector(
       onTap: () => Navigator.push(
@@ -1211,7 +1140,6 @@ class _HomePageState extends State<HomePage> {
                         ],
                       ),
                       const SizedBox(height: 4),
-                      // ✅ แสดง event badge ถ้ามี
                       if ((market['eventCount'] ?? 0) > 0)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 4),
@@ -1240,18 +1168,6 @@ class _HomePageState extends State<HomePage> {
                         '🕐 ${market['openTime']}',
                         style:
                             GoogleFonts.kanit(fontSize: 12, color: Colors.grey),
-                      ),
-                      Row(
-                        children: [
-                          const Icon(Icons.star_rounded,
-                              color: Color(0xFFFFB000), size: 13),
-                          Text(' ${market['rating']}',
-                              style: GoogleFonts.kanit(
-                                  fontSize: 12, color: Colors.grey)),
-                          Text(' (${market['reviewCount'] ?? 0} รีวิว)',
-                              style: GoogleFonts.kanit(
-                                  fontSize: 11, color: Colors.grey)),
-                        ],
                       ),
                       const SizedBox(height: 6),
                       Wrap(
@@ -1325,7 +1241,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ── Bottom Nav ────────────────────────────────────────────
+  // ── Bottom Nav ───────────────────────────────────────────
   Widget _buildBottomNav() {
     final items = [
       {'icon': Icons.favorite_rounded, 'label': 'ถูกใจ'},
@@ -1334,6 +1250,7 @@ class _HomePageState extends State<HomePage> {
       {'icon': Icons.shopping_cart_outlined, 'label': 'ร้านค้า'},
       {'icon': Icons.account_circle_rounded, 'label': 'โปรไฟล์'},
     ];
+
     final double itemWidth = MediaQuery.of(context).size.width / items.length;
 
     return SizedBox(
@@ -1424,6 +1341,9 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
+// ══════════════════════════════════════════════════════════
+// Wave Painter
+// ══════════════════════════════════════════════════════════
 class _TopWavePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
